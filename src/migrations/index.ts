@@ -2,6 +2,7 @@ import * as migration_20260721_180500 from './20260721_180500';
 import * as migration_20260722_042651_add_coupons_and_order_snapshots from './20260722_042651_add_coupons_and_order_snapshots';
 import * as migration_20260722_055932_required_product_sku from './20260722_055932_required_product_sku';
 import * as migration_20260722_081625_move_customers_out_of_admin from './20260722_081625_move_customers_out_of_admin';
+import * as migration_20260722_233000_add_reviews_locked_docs from './20260722_233000_add_reviews_locked_docs';
 
 export const migrations = [
   {
@@ -23,5 +24,10 @@ export const migrations = [
     up: migration_20260722_081625_move_customers_out_of_admin.up,
     down: migration_20260722_081625_move_customers_out_of_admin.down,
     name: '20260722_081625_move_customers_out_of_admin'
+  },
+  {
+    up: migration_20260722_233000_add_reviews_locked_docs.up,
+    down: migration_20260722_233000_add_reviews_locked_docs.down,
+    name: '20260722_233000_add_reviews_locked_docs'
   },
 ];

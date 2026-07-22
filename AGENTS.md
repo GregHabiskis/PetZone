@@ -110,7 +110,7 @@ Migrations live under `src/migrations/` and are registered by `src/migrations/in
 6. Apply with `pnpm exec payload migrate`.
 7. Run `pnpm exec payload migrate:status` and Supabase security/performance advisors.
 
-The coupon/order-snapshot and required-product-SKU migrations are applied to the current Supabase project. A former Payload `dev` schema-push record was reconciled before migration-driven mode was locked.
+The coupon/order-snapshot, required-product-SKU, move-customers-out-of-admin, and add-reviews-locked-docs migrations are applied to the current Supabase project. A former Payload `dev` schema-push record was reconciled before migration-driven mode was locked.
 
 ## Product CSV architecture
 
