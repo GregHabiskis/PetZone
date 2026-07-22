@@ -2,12 +2,12 @@ import type { Access, CollectionConfig } from 'payload'
 
 const ownDocuments: Access = ({ req: { user } }) => {
   if (!user) return false
-  if (['admin', 'editor'].includes(String(user.role))) return true
+  if (user.collection === 'users' && ['admin', 'editor'].includes(String(user.role))) return true
   return { customer: { equals: user.id } }
 }
 
 const staffOnly: Access = ({ req: { user } }) =>
-  Boolean(user && ['admin', 'editor'].includes(String(user.role)))
+  Boolean(user?.collection === 'users' && ['admin', 'editor'].includes(String(user.role)))
 
 export const Orders: CollectionConfig = {
   slug: 'orders',
@@ -15,7 +15,7 @@ export const Orders: CollectionConfig = {
   access: { create: () => false, read: ownDocuments, update: staffOnly, delete: staffOnly },
   fields: [
     { name: 'orderNumber', type: 'text', unique: true, index: true, required: true },
-    { name: 'customer', type: 'relationship', relationTo: 'users', required: true, index: true },
+    { name: 'customer', type: 'relationship', relationTo: 'customers', required: true, index: true },
     {
       name: 'contact',
       type: 'group',
@@ -69,7 +69,7 @@ export const Appointments: CollectionConfig = {
   admin: { useAsTitle: 'ownerName', defaultColumns: ['ownerName', 'petName', 'preferredAt', 'status'] },
   access: { create: () => false, read: ownDocuments, update: staffOnly, delete: staffOnly },
   fields: [
-    { name: 'customer', type: 'relationship', relationTo: 'users', required: true, index: true },
+    { name: 'customer', type: 'relationship', relationTo: 'customers', required: true, index: true },
     { name: 'ownerName', type: 'text', required: true },
     { name: 'contact', type: 'text', required: true },
     { name: 'petName', type: 'text', required: true },

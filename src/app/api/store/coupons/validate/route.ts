@@ -15,7 +15,7 @@ const schema = z.object({
 export async function POST(request: Request) {
   const payload = await getPayload({ config })
   const { user } = await payload.auth({ headers: request.headers })
-  if (!user || user.collection !== 'users') return Response.json({ error: 'You must sign in to apply a coupon.' }, { status: 401 })
+  if (!user || user.collection !== 'customers') return Response.json({ error: 'You must sign in to apply a coupon.' }, { status: 401 })
   const parsed = schema.safeParse(await request.json().catch(() => null))
   if (!parsed.success) return Response.json({ error: 'Enter a coupon code and check your cart.' }, { status: 400 })
 

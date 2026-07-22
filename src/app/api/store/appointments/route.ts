@@ -15,7 +15,7 @@ const schema = z.object({
 export async function POST(request: Request) {
   const payload = await getPayload({ config })
   const { user } = await payload.auth({ headers: request.headers })
-  if (!user) return Response.json({ error: 'You must sign in before requesting an appointment.' }, { status: 401 })
+  if (!user || user.collection !== 'customers') return Response.json({ error: 'You must sign in before requesting an appointment.' }, { status: 401 })
 
   const parsed = schema.safeParse(await request.json().catch(() => null))
   if (!parsed.success) return Response.json({ error: 'Please check the appointment details.', issues: parsed.error.flatten().fieldErrors }, { status: 400 })

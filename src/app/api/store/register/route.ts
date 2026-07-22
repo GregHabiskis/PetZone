@@ -21,11 +21,11 @@ export async function POST(request: Request) {
 
   const payload = await getPayload({ config })
   const phone = normalizePhone(parsed.data.phone)
-  const existing = await payload.find({ collection: 'users', where: { phone: { equals: phone } }, limit: 1, overrideAccess: true })
+  const existing = await payload.find({ collection: 'customers', where: { phone: { equals: phone } }, limit: 1, overrideAccess: true })
   if (existing.totalDocs) return Response.json({ error: 'An account already exists for this phone number.' }, { status: 409 })
 
   await payload.create({
-    collection: 'users',
+    collection: 'customers',
     data: {
       firstName: parsed.data.firstName,
       lastName: parsed.data.lastName,
@@ -36,7 +36,6 @@ export async function POST(request: Request) {
       username: phone,
       email: parsed.data.email || undefined,
       password: parsed.data.password,
-      role: 'customer',
     },
     overrideAccess: true,
   })

@@ -1,7 +1,7 @@
 import type { Access, CollectionConfig, NumberFieldValidation } from 'payload'
 import { normalizeCouponCode } from '@/lib/coupons'
 
-const staffOnly: Access = ({ req: { user } }) => Boolean(user && ['admin', 'editor'].includes(String(user.role)))
+const staffOnly: Access = ({ req: { user } }) => Boolean(user?.collection === 'users' && ['admin', 'editor'].includes(String(user.role)))
 const validateDiscountValue: NumberFieldValidation = (value, { siblingData }) =>
   (siblingData as { discountType?: string }).discountType === 'percentage' && Number(value) > 100
     ? 'Percentage discounts cannot exceed 100.'

@@ -6,7 +6,7 @@ import { s3Storage } from '@payloadcms/storage-s3'
 import nextEnv from '@next/env'
 import { buildConfig } from 'payload'
 import sharp from 'sharp'
-import { Users } from './collections/Users'
+import { Customers, Users } from './collections/Users'
 import { Media } from './collections/Media'
 import { Products } from './collections/Products'
 import { Brands, Categories } from './collections/Taxonomies'
@@ -38,7 +38,7 @@ export default buildConfig({
       },
     },
   },
-  collections: [Users, Media, Brands, Categories, Products, Pages, Posts, Coupons, Orders, Appointments],
+  collections: [Users, Customers, Media, Brands, Categories, Products, Pages, Posts, Coupons, Orders, Appointments],
   globals: [SiteSettings],
   editor: lexicalEditor(),
   localization: {
