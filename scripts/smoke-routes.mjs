@@ -2,10 +2,15 @@ import { readFile } from 'node:fs/promises'
 
 const baseURL = process.env.SMOKE_BASE_URL || 'http://127.0.0.1:3000'
 const timeoutMs = Number(process.env.SMOKE_TIMEOUT_MS || 120_000)
-const importMap = await readFile(new URL('../src/app/(payload)/admin/importMap.ts', import.meta.url), 'utf8')
+const importMap = await readFile(new URL('../src/app/(payload)/admin/importMap.js', import.meta.url), 'utf8')
 
-if (!importMap.includes('@payloadcms/storage-s3/client#S3ClientUploadHandler')) {
-  throw new Error('Payload import map is stale. Run pnpm payload:generate before starting the app.')
+for (const requiredImport of [
+  '@payloadcms/storage-s3/client#S3ClientUploadHandler',
+  '/components/admin/product-csv-manager#ProductCSVManager',
+]) {
+  if (!importMap.includes(requiredImport)) {
+    throw new Error(`Payload import map is stale or incomplete: missing ${requiredImport}. Run pnpm payload:generate.`)
+  }
 }
 
 for (const path of ['/', '/api/health', '/checkout', '/admin']) {
