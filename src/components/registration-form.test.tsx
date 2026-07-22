@@ -27,7 +27,7 @@ describe('RegistrationForm', () => {
 
     await waitFor(() => expect(fetchMock).toHaveBeenNthCalledWith(
       2,
-      '/api/customers/login',
+      '/api/store/login',
       expect.any(Object),
     ))
   })

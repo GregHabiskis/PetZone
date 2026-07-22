@@ -4,6 +4,7 @@ export type Product = {
   id: string
   slug: string
   name: LocalizedText
+  description?: LocalizedText
   brand: string
   category: string
   price: number

@@ -16,7 +16,7 @@ export function LoginForm({ redirectTo, compact = false }: Props) {
     setError('')
     const form = new FormData(event.currentTarget)
     const identifier = String(form.get('identifier') || '').trim()
-    const response = await fetch('/api/customers/login', {
+    const response = await fetch('/api/store/login', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       credentials: 'include',
@@ -42,7 +42,7 @@ export function LogoutButton() {
   const [pending, setPending] = useState(false)
   return <button className="secondary-button" disabled={pending} onClick={async () => {
     setPending(true)
-    await fetch('/api/customers/logout', { method: 'POST', credentials: 'include' })
+    await fetch('/api/store/logout', { method: 'POST', credentials: 'include' })
     router.push('/account')
     router.refresh()
   }}>{pending ? 'Signing out…' : 'Sign out'}</button>

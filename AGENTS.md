@@ -9,6 +9,7 @@ PetZone is a bilingual Bangladesh pet-commerce and care website. It combines pro
 - Guest checkout and guest order tracking are forbidden. Do not add bypasses.
 - Checkout and order creation require a valid Payload-authenticated user from secure HTTP-only cookies.
 - Every button and button-style CTA uses `#EE5F27` with white text. This brand choice has a documented 3.33:1 normal-text contrast tradeoff; retain bold labels and visible focus rings.
+- Cart count badge uses `--light-red` (`#FF6B6B`, `oklch(74% .14 22)` in dark mode) with white text, not the orange button color — it must contrast against the Coral `#EE5F27` cart button.
 - Keep the exact primary menu labels and order in `src/components/header.tsx`.
 - Preserve English/Bangla localization, PetZone palette, the white footer-logo squircle, responsive Vet Center image, WhatsApp widget, and Go to Top behavior.
 - Coupon rules are managed in Payload. Clients never provide authoritative discount, shipping, fee, or order totals.
@@ -55,7 +56,7 @@ Cold development compilation can exceed 60 seconds. `scripts/smoke-routes.mjs` d
 - `/checkout`: authenticated checkout or account-required state.
 - `/account`, `/orders`, `/track-order`: authenticated customer surfaces.
 - `/register`: customer registration.
-- `/offer-zone`, `/pet-pharmacy`, `/vet-care`, `/blog`, `/about`, and legal pages: content/service routes.
+- `/offer-zone`, `/vet-care`, `/blog`, `/about`, and legal pages: content/service routes.
 
 ### Payload and APIs
 
@@ -63,9 +64,12 @@ Cold development compilation can exceed 60 seconds. `scripts/smoke-routes.mjs` d
 - `/api/[...slug]`, `/api/graphql`: Payload API surfaces.
 - `/api/health`: health probe.
 - `/api/store/register`: customer registration.
+- `/api/store/login`, `/api/store/logout`: customer session endpoints (dedicated customer cookie).
 - `/api/store/coupons/validate`: authenticated, server-authoritative coupon preview.
 - `/api/store/orders`: authenticated, server-authoritative order creation.
 - `/api/store/appointments`: appointment creation.
+- `/api/store/reviews?productSlug=xxx`: public, returns product reviews with customer names.
+- `/api/store/reviews`: POST — authenticated, creates one review per customer per product.
 - `/api/admin/products/export`: staff-only UTF-8 CSV export.
 - `/api/admin/products/import`: staff-only same-origin dry-run/commit CSV import.
 
@@ -87,9 +91,11 @@ Collections are configured in `src/payload.config.ts`:
 - `media`: uploads stored through Supabase's S3-compatible endpoint.
 - `brands`, `categories`: localized taxonomy.
 - `products`: localized product/SEO/details, variants, relationships, required unique SKU, stock/status.
-- `pages`, `posts`: localized managed content.
+- `pages`: localized managed content for main site pages (Homepage, About, Vet Care Center, Return & Refund Policy, Terms & Conditions, Privacy Policy, Offer Zone). Seeded via `scripts/seed-all.ts`.
+- `posts`: localized blog content. 20 Bangla blog posts seeded from `src/lib/blog-data.ts` via `scripts/seed-all.ts`.
 - `orders`, `appointments`: authenticated commerce/service records.
 - `coupons`: staff-managed rules; no public collection read.
+- `reviews`: authenticated customer reviews keyed by product slug.
 - `site-settings`: global navigation/contact/SEO settings.
 
 `postgresAdapter` uses `push: false`. Schema changes are migration-only. Never turn development schema push back on against the shared Supabase database.
@@ -145,8 +151,11 @@ Blank status defaults to `draft`. Unknown/ambiguous brand, category, or media re
 
 ## Authentication and forbidden flows
 
-- Cookies are Payload-managed, HTTP-only, `SameSite=Lax`, and secure in production.
-- Use `getCurrentUser()` for server-rendered storefront authentication.
+- Two auth collections share one browser, so sessions are split by cookie: staff (`users`) use the Payload-managed `payload-token`; storefront customers (`customers`) use the dedicated `pz-customer-token` (7-day TTL) issued by `/api/store/login` and verified by `src/lib/customer-session.ts`. Payload hardcodes one cookie name for all auth collections — never point the storefront at `/api/customers/login`, or the two sessions will clobber each other again.
+- Payload CSRF allowlists `serverURL` only by default. `localhost` and `127.0.0.1` are different hosts — browsing admin on one while `NEXT_PUBLIC_SITE_URL` is the other rejects cookie auth on PATCH/POST ("You are not allowed to perform this action"). `src/lib/site-origins.ts` pairs them; keep `csrf: siteOrigins(...)` in `payload.config.ts`.
+- All cookies are HTTP-only, `SameSite=Lax`, and secure in production.
+- Use `getCurrentUser()` for server-rendered storefront authentication, and `getCustomerFromHeaders()` in storefront route handlers. Never use `payload.auth()` for customer context: it returns the first matching strategy across all auth collections and can resolve a staff user instead of the customer.
+- Staff-only surfaces (admin, CSV import/export) keep using `payload.auth()` + staff role checks.
 - Order/history queries must be scoped to the authenticated user's ID even when server code uses `overrideAccess`.
 - `/api/store/orders` must reject unauthenticated requests before reading cart/order data.
 - Never add guest order IDs, email-only tracking, public coupon reads, or client-authoritative pricing.
@@ -210,6 +219,45 @@ Names only; never commit or print values:
 ## Current implementation status and deferred work
 
 Implemented: stable route smoke loop; migration-only Payload startup; cart drawer and upsells; checkout coupon UI and authoritative totals; coupon collection/order snapshots and applied migrations; URL catalog filters/price controls; predictive search; card action spacing; trust-bar theme toggle; staff-only transactional CSV UI/routes; generated Payload types/import map; design-system addendum.
+
+CSS system (`globals.css`):
+- `--light-red` CSS variable (`#FF6B6B` light, `oklch(74% .14 22)` dark) for cart count badge — distinct from orange button background.
+- `p { margin-bottom: 1em }` for consistent vertical rhythm between text and subsequent elements.
+- `product-brand { margin: 0 0 8px }` combined with `product-body h3 { margin-top: 6px }` = ~14px brand-to-title gap (was 6px).
+- `.footer-bottom { text-align: center }` — copyright centered on all viewports.
+- `.product-reviews` block: `.review-card`, `.review-stars .star.filled` (orange), `.star-btn.filled`, `.review-auth-notice`, `.compare-price`.
+
+### Lexical editor (Posts & Pages)
+Configured in `src/payload.config.ts` with all rich-text features: bold, italic, underline, strikethrough, inline code, subscript, superscript, headings, ordered/unordered/checklist lists, links, blockquotes, horizontal rules, alignment, indent, tables, fixed + inline toolbars, any upload relationship. Editor min-height `500px` in admin. Raw HTML support via an optional `contentHtml` `code` field on Posts.
+
+### Appointments collection
+- Field `preferredAt` (date, required) replaced with `petWeight` (text, optional).
+- Zod schema in `src/app/api/store/appointments/route.ts` updated to match.
+- DB column migrated from `preferred_at` → `pet_weight`.
+
+### Product description section
+- `Product` type in `src/lib/commerce.ts` has an optional `description` (localized `{ en, bn }`).
+- Static fixture products in `src/lib/data.ts` include localized descriptions.
+- Product detail page renders the description in a dedicated `content-copy` section below the product hero, with English text followed by Bangla on a separate `<p lang="bn">` line.
+
+### Reviews collection (`reviews`)
+- Slug: `reviews`. Fields: `customer` (required relationship to `customers`), `productSlug` (text, indexed), `rating` (number, 1–5), `comment` (textarea).
+- **Access**: create = authenticated customers only; read = public; update = own customer or staff; delete = staff only.
+- DB table: `reviews` with FK `customer_id → customers.id ON DELETE CASCADE`.
+- **API routes**:
+  - `GET /api/store/reviews?productSlug=xxx` — public, returns reviews with customer name, sorted newest-first.
+  - `POST /api/store/reviews` — authenticated, one review per customer per product (409 on duplicate).
+- **UI**: `src/components/product-reviews.tsx` client component with star-rating selector, comment textarea, existing review list. Renders in a dedicated section on every product page. Unauthenticated users see a "Sign in to leave a review" notice.
+
+### Checkout page layout
+- Unauthenticated checkout: sign-in notice (`checkout-signin-notice`) rendered **above** the `auth-grid` (full width) instead of inside it.
+- Login form and "New customer?" card remain side-by-side in the 2-column `auth-grid` on Desktop/Tablet. Mobile collapses to 1 column.
+
+### Seeded CMS content
+- **Admin user**: `aversion-coke-punk@duck.com` — password reset via `scripts/seed-all.ts`; stored hash was corrupted.
+- **Posts**: 20 Bangla blog articles seeded from `src/lib/blog-data.ts` into the Payload `posts` collection.
+- **Pages**: 7 managed pages created (Homepage, About Us, Vet Care Center, Return & Refund Policy, Terms & Conditions, Privacy Policy, Offer Zone) with English + Bengali content in Lexical format.
+- Seed script: `scripts/seed-all.ts` — run with `pnpm dlx tsx --env-file=.env.local scripts/seed-all.ts`.
 
 Still deployment-dependent or intentionally deferred:
 

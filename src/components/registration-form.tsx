@@ -17,7 +17,7 @@ export function RegistrationForm() {
     const registration = await fetch('/api/store/register', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(data) })
     const result = await registration.json()
     if (!registration.ok) { setPending(false); return setError(result.error || 'Could not create your account.') }
-    const login = await fetch('/api/customers/login', {
+    const login = await fetch('/api/store/login', {
       method: 'POST', headers: { 'content-type': 'application/json' }, credentials: 'include',
       body: JSON.stringify({ username: result.username, password: data.password }),
     })

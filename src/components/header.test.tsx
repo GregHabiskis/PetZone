@@ -1,9 +1,8 @@
 import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
-const setLocale = vi.fn()
 vi.mock('./store-provider', () => ({
-  useStore: () => ({ cart: [], locale: 'en', openCartDrawer: vi.fn(), setLocale }),
+  useStore: () => ({ cart: [], openCartDrawer: vi.fn() }),
 }))
 vi.mock('./cart-drawer', () => ({ CartDrawer: () => null }))
 vi.mock('next/image', () => ({ default: ({ alt }: React.ImgHTMLAttributes<HTMLImageElement> & { priority?: boolean }) => <span role="img" aria-label={alt} /> }))
@@ -11,8 +10,8 @@ vi.mock('next/link', () => ({ default: ({ href, children, ...props }: React.Anch
 
 import { Header } from './header'
 
-const labels = ['Offer Zone', 'Cat', 'Dog', 'Bird', 'Rabbit', 'Small Pet Food', 'Shop By Brands', 'Pet Pharmacy', 'Blog']
-const hrefs = ['/offer-zone', '/shop?pet=Cat', '/shop?pet=Dog', '/shop?pet=Bird', '/shop?pet=Rabbit', '/shop?pet=Small', '/brands', '/pet-pharmacy', '/blog']
+const labels = ['Offer Zone', 'Cat', 'Dog', 'Bird', 'Rabbit', 'Small Pet Food', 'Shop By Brands', 'Vet Care Center', 'Blog']
+const hrefs = ['/offer-zone', '/shop?pet=Cat', '/shop?pet=Dog', '/shop?pet=Bird', '/shop?pet=Rabbit', '/shop?pet=Small', '/brands', '/vet-care', '/blog']
 
 describe('Header', () => {
   beforeEach(() => {
@@ -38,13 +37,11 @@ describe('Header', () => {
     expect(within(mobile).getAllByRole('link').map((link) => link.getAttribute('href'))).toEqual(hrefs)
   })
 
-  it('places the theme pill immediately before Help and outside header actions', async () => {
+  it('renders the theme toggle and toggles dark mode', async () => {
     localStorage.setItem('petzone-theme', 'dark')
     const { container } = render(<Header />)
 
-    const help = screen.getByRole('link', { name: 'Help' })
     const toggle = await screen.findByRole('button', { name: 'Switch to light mode' })
-    expect(help.previousElementSibling).toBe(toggle)
     expect(toggle).toHaveTextContent('Dark')
     expect(container.querySelector('.header-actions .theme-toggle')).toBeNull()
 

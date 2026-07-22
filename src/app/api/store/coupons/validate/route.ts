@@ -3,6 +3,7 @@ import { getPayload } from 'payload'
 import { z } from 'zod'
 import { shippingQuote, type PaymentMethod, type ShippingMethod } from '@/lib/commerce'
 import { calculateDiscountedTotals, validateCouponWithPayload } from '@/lib/coupons'
+import { getCustomerFromHeaders } from '@/lib/customer-session'
 import { resolvePayloadCart } from '@/lib/payload-cart'
 
 const schema = z.object({
@@ -14,8 +15,8 @@ const schema = z.object({
 
 export async function POST(request: Request) {
   const payload = await getPayload({ config })
-  const { user } = await payload.auth({ headers: request.headers })
-  if (!user || user.collection !== 'customers') return Response.json({ error: 'You must sign in to apply a coupon.' }, { status: 401 })
+  const user = await getCustomerFromHeaders(payload, request.headers)
+  if (!user) return Response.json({ error: 'You must sign in to apply a coupon.' }, { status: 401 })
   const parsed = schema.safeParse(await request.json().catch(() => null))
   if (!parsed.success) return Response.json({ error: 'Enter a coupon code and check your cart.' }, { status: 400 })
 

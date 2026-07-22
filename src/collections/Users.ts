@@ -41,6 +41,7 @@ export const Customers: CollectionConfig = {
   auth: {
     cookies: { sameSite: 'Lax', secure: process.env.NODE_ENV === 'production' },
     loginWithUsername: { allowEmailLogin: true, requireEmail: false, requireUsername: true },
+    tokenExpiration: 60 * 60 * 24 * 7, // 7 days
   },
   admin: { hidden: true, useAsTitle: 'phone', defaultColumns: ['firstName', 'lastName', 'phone', 'email'] },
   access: {

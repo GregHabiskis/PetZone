@@ -18,13 +18,13 @@ describe('customer authentication forms', () => {
     fireEvent.change(screen.getByLabelText('Password'), { target: { value: 'password123' } })
     fireEvent.submit(screen.getByRole('button', { name: 'Sign in' }).closest('form')!)
 
-    await waitFor(() => expect(fetch).toHaveBeenCalledWith('/api/customers/login', expect.any(Object)))
+    await waitFor(() => expect(fetch).toHaveBeenCalledWith('/api/store/login', expect.any(Object)))
   })
 
   it('signs storefront customers out through the customers auth collection', async () => {
     render(<LogoutButton />)
     fireEvent.click(screen.getByRole('button', { name: 'Sign out' }))
 
-    await waitFor(() => expect(fetch).toHaveBeenCalledWith('/api/customers/logout', expect.any(Object)))
+    await waitFor(() => expect(fetch).toHaveBeenCalledWith('/api/store/logout', expect.any(Object)))
   })
 })

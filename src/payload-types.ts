@@ -79,6 +79,7 @@ export interface Config {
     coupons: Coupon;
     orders: Order;
     appointments: Appointment;
+    reviews: Review;
     'payload-kv': PayloadKv;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
@@ -97,6 +98,7 @@ export interface Config {
     coupons: CouponsSelect<false> | CouponsSelect<true>;
     orders: OrdersSelect<false> | OrdersSelect<true>;
     appointments: AppointmentsSelect<false> | AppointmentsSelect<true>;
+    reviews: ReviewsSelect<false> | ReviewsSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
@@ -485,6 +487,10 @@ export interface Post {
     };
     [k: string]: unknown;
   } | null;
+  /**
+   * Optional raw HTML — overrides the rich text content when filled.
+   */
+  contentHtml?: string | null;
   featuredImage?: (number | null) | Media;
   publishedAt?: string | null;
   seo?: {
@@ -579,10 +585,23 @@ export interface Appointment {
   petName: string;
   petType: 'Cat' | 'Dog' | 'Bird' | 'Rabbit' | 'Other';
   age?: string | null;
+  petWeight?: string | null;
   reason: string;
-  preferredAt: string;
   attachment?: (number | null) | Media;
   status: 'requested' | 'confirmed' | 'completed' | 'cancelled';
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "reviews".
+ */
+export interface Review {
+  id: number;
+  customer: number | Customer;
+  productSlug: string;
+  rating: number;
+  comment: string;
   updatedAt: string;
   createdAt: string;
 }
@@ -653,6 +672,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'appointments';
         value: number | Appointment;
+      } | null)
+    | ({
+        relationTo: 'reviews';
+        value: number | Review;
       } | null);
   globalSlug?: string | null;
   user:
@@ -928,6 +951,7 @@ export interface PostsSelect<T extends boolean = true> {
   slug?: T;
   excerpt?: T;
   content?: T;
+  contentHtml?: T;
   featuredImage?: T;
   publishedAt?: T;
   seo?:
@@ -1025,10 +1049,22 @@ export interface AppointmentsSelect<T extends boolean = true> {
   petName?: T;
   petType?: T;
   age?: T;
+  petWeight?: T;
   reason?: T;
-  preferredAt?: T;
   attachment?: T;
   status?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "reviews_select".
+ */
+export interface ReviewsSelect<T extends boolean = true> {
+  customer?: T;
+  productSlug?: T;
+  rating?: T;
+  comment?: T;
   updatedAt?: T;
   createdAt?: T;
 }

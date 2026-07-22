@@ -11,7 +11,7 @@ describe('ProductSearch', () => {
 
   it('debounces previews until two characters and limits matching results', () => {
     vi.useFakeTimers()
-    render(<ProductSearch products={products} locale="en" />)
+    render(<ProductSearch products={products} />)
     const input = screen.getByRole('combobox', { name: 'Search products' })
     fireEvent.focus(input)
 
@@ -29,17 +29,13 @@ describe('ProductSearch', () => {
     expect(screen.getByText('Royal Canin Regular Fit 32 Adult Cat Food')).toBeInTheDocument()
   })
 
-  it('supports localized previews and concise empty results', () => {
+  it('shows empty results for queries matching nothing', () => {
     vi.useFakeTimers()
-    render(<ProductSearch products={products} locale="bn" />)
+    render(<ProductSearch products={products} />)
     const input = screen.getByRole('combobox', { name: 'Search products' })
     fireEvent.focus(input)
 
-    fireEvent.change(input, { target: { value: 'রয়্যাল' } })
-    act(() => vi.advanceTimersByTime(200))
-    expect(screen.getByText('রয়্যাল ক্যানিন রেগুলার ফিট ৩২ অ্যাডাল্ট ক্যাট ফুড')).toBeInTheDocument()
-
-    fireEvent.change(input, { target: { value: 'কিছুইনেই' } })
+    fireEvent.change(input, { target: { value: 'zzzzz' } })
     act(() => vi.advanceTimersByTime(200))
     expect(screen.getByText('No products found')).toBeInTheDocument()
   })
@@ -47,7 +43,7 @@ describe('ProductSearch', () => {
   it('supports arrow selection, Enter navigation, Escape, and normal search submission', () => {
     vi.useFakeTimers()
     const click = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => undefined)
-    render(<ProductSearch products={products} locale="en" />)
+    render(<ProductSearch products={products} />)
     const form = screen.getByRole('search')
     const input = screen.getByRole('combobox', { name: 'Search products' })
     fireEvent.focus(input)

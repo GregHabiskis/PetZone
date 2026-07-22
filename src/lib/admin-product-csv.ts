@@ -8,6 +8,7 @@ import {
   type ProductCSVRelation,
   type ProductCSVRelations,
 } from './product-csv'
+import { siteOrigins } from './site-origins'
 
 type StaffUser = TypedUser & { id: string | number; role?: unknown }
 type ProductDocument = Record<string, any> & { id: number; sku?: string | null }
@@ -31,10 +32,7 @@ export function isProductCSVStaff(user: unknown): user is StaffUser {
 export function isSameOriginAdminRequest(request: Request): boolean {
   const origin = request.headers.get('origin')
   if (!origin) return false
-  const allowed = new Set([new URL(request.url).origin])
-  if (process.env.NEXT_PUBLIC_SITE_URL) {
-    try { allowed.add(new URL(process.env.NEXT_PUBLIC_SITE_URL).origin) } catch { /* invalid deployment config is not an allowed origin */ }
-  }
+  const allowed = new Set([new URL(request.url).origin, ...siteOrigins()])
   return allowed.has(origin)
 }
 

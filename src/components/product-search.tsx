@@ -8,13 +8,12 @@ import { formatBDT, type Product } from '@/lib/commerce'
 
 type ProductSearchProps = {
   products: Product[]
-  locale: 'en' | 'bn'
 }
 
 const DEBOUNCE_MS = 200
 const MAX_RESULTS = 5
 
-export function ProductSearch({ products, locale }: ProductSearchProps) {
+export function ProductSearch({ products }: ProductSearchProps) {
   const [query, setQuery] = useState('')
   const [debouncedQuery, setDebouncedQuery] = useState('')
   const [focused, setFocused] = useState(false)
@@ -71,7 +70,7 @@ export function ProductSearch({ products, locale }: ProductSearchProps) {
       aria-expanded={showPanel}
       aria-activedescendant={activeProduct ? `product-search-option-${activeProduct.id}` : undefined}
       autoComplete="off"
-      placeholder={locale === 'bn' ? 'খাবার, ওষুধ, খেলনা বা ব্র্যান্ড খুঁজুন' : 'Search food, medicine, toys or brands'}
+      placeholder="Search food, medicine, toys or brands"
       onChange={(event) => {
         setQuery(event.target.value)
         setDismissed(false)
@@ -95,7 +94,7 @@ export function ProductSearch({ products, locale }: ProductSearchProps) {
         >
           <Link href={`/product/${product.slug}`} onMouseDown={(event) => event.preventDefault()}>
             <Image src={product.image} alt="" width={56} height={56} />
-            <span><strong>{product.name[locale]}</strong><small>{product.brand}</small></span>
+            <span><strong>{product.name.en}</strong><small>{product.brand}</small></span>
             <b>{formatBDT(product.price)}</b>
           </Link>
         </li>)}

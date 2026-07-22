@@ -8,7 +8,7 @@ import { cartTotal, formatBDT } from '@/lib/commerce'
 import { useStore } from './store-provider'
 
 export function CartDrawer() {
-  const { cart, cartDrawerOpen, closeCartDrawer, locale, updateQuantity } = useStore()
+  const { cart, cartDrawerOpen, closeCartDrawer, updateQuantity } = useStore()
   const panelRef = useRef<HTMLElement>(null)
 
   useEffect(() => {
@@ -51,7 +51,7 @@ export function CartDrawer() {
       <div className="cart-drawer-items">
         {cart.length === 0 ? <div className="empty-state"><h3>Your cart is empty.</h3><p>Add an everyday essential to get started.</p></div> : cart.map(({ product, quantity }) => <div className="drawer-cart-row" key={product.id}>
           <Image src={product.image} alt="" width={72} height={72} />
-          <div className="drawer-cart-copy"><strong>{product.name[locale]}</strong><span>{product.brand}</span><b>{formatBDT(product.price * quantity)}</b></div>
+          <div className="drawer-cart-copy"><strong>{product.name.en}</strong><span>{product.brand}</span><b>{formatBDT(product.price * quantity)}</b></div>
           <div className="drawer-cart-controls">
             <div className="quantity"><button aria-label={`Decrease ${product.name.en}`} onClick={() => updateQuantity(product.id, quantity - 1)}><Minus /></button><span>{quantity}</span><button aria-label={`Increase ${product.name.en}`} onClick={() => updateQuantity(product.id, quantity + 1)}><Plus /></button></div>
             <button className="drawer-remove" aria-label={`Remove ${product.name.en}`} onClick={() => updateQuantity(product.id, 0)}><Trash2 /></button>

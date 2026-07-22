@@ -16,4 +16,10 @@ describe('Payload identity collections', () => {
       'firstName', 'lastName', 'phone', 'streetAddress', 'city', 'postalCode',
     ])
   })
+
+  it('gives customers a 7-day session while staff keep the Payload default', () => {
+    const authOf = (collection: typeof Users) => (typeof collection.auth === 'object' ? collection.auth : {})
+    expect(authOf(Customers).tokenExpiration).toBe(60 * 60 * 24 * 7)
+    expect(authOf(Users).tokenExpiration).toBeUndefined()
+  })
 })
