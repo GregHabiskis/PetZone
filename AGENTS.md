@@ -220,6 +220,9 @@ Names only; never commit or print values:
 
 Implemented: stable route smoke loop; migration-only Payload startup; cart drawer and upsells; checkout coupon UI and authoritative totals; coupon collection/order snapshots and applied migrations; URL catalog filters/price controls; predictive search; card action spacing; trust-bar theme toggle; staff-only transactional CSV UI/routes; generated Payload types/import map; design-system addendum.
 
+- `.product-packs` was removed from CSS and homepage — it was overlapping the hero image.
+- `.field-error` (red, 13px, block below input) for per-field validation messages; `.status-error` for error-variant `.status-message`.
+
 CSS system (`globals.css`):
 - `--light-red` CSS variable (`#FF6B6B` light, `oklch(74% .14 22)` dark) for cart count badge — distinct from orange button background.
 - `p { margin-bottom: 1em }` for consistent vertical rhythm between text and subsequent elements.
@@ -234,6 +237,7 @@ Configured in `src/payload.config.ts` with all rich-text features: bold, italic,
 - Field `preferredAt` (date, required) replaced with `petWeight` (text, optional).
 - Zod schema in `src/app/api/store/appointments/route.ts` updated to match.
 - DB column migrated from `preferred_at` → `pet_weight`.
+- Validation errors now return the first field-specific message (e.g. "Owner name must be at least 2 characters") instead of the generic "Please check the appointment details." The frontend displays `.field-error` messages below each invalid input and applies `aria-invalid`.
 
 ### Product description section
 - `Product` type in `src/lib/commerce.ts` has an optional `description` (localized `{ en, bn }`).

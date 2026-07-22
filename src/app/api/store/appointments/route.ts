@@ -19,7 +19,12 @@ export async function POST(request: Request) {
   if (!user) return Response.json({ error: 'You must sign in before requesting an appointment.' }, { status: 401 })
 
   const parsed = schema.safeParse(await request.json().catch(() => null))
-  if (!parsed.success) return Response.json({ error: 'Please check the appointment details.', issues: parsed.error.flatten().fieldErrors }, { status: 400 })
+  if (!parsed.success) {
+    const fieldErrors = parsed.error.flatten().fieldErrors as Record<string, string[] | undefined>
+    const firstField = Object.keys(fieldErrors)[0]
+    const firstError = firstField ? (fieldErrors[firstField]?.[0] ?? 'Invalid value') : 'Invalid value'
+    return Response.json({ error: firstError, issues: fieldErrors }, { status: 400 })
+  }
 
   const appointment = await payload.create({
     collection: 'appointments',
