@@ -1,0 +1,21 @@
+'use client'
+
+import { useState } from 'react'
+
+export function AppointmentForm() {
+  const [message, setMessage] = useState('')
+  const [pending, setPending] = useState(false)
+  async function submit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    setPending(true)
+    setMessage('')
+    const form = new FormData(event.currentTarget)
+    const preferred = new Date(String(form.get('preferredAt'))).toISOString()
+    const response = await fetch('/api/store/appointments', { method: 'POST', headers: { 'content-type': 'application/json' }, credentials: 'include', body: JSON.stringify({ ...Object.fromEntries(form.entries()), preferredAt: preferred }) })
+    const result = await response.json()
+    setPending(false)
+    setMessage(response.ok ? 'Appointment request saved. Our team will confirm the schedule.' : result.error || 'Could not save the request.')
+    if (response.ok) event.currentTarget.reset()
+  }
+  return <form className="form-card" onSubmit={submit} data-od-id="vet-appointment-form"><p className="eyebrow">REQUEST AN APPOINTMENT</p><h2>Tell us who needs care.</h2><div className="two-col"><div className="field"><label htmlFor="ownerName">Owner name</label><input id="ownerName" name="ownerName" required /></div><div className="field"><label htmlFor="contact">Phone or email</label><input id="contact" name="contact" required /></div></div><div className="two-col"><div className="field"><label htmlFor="petName">Pet name</label><input id="petName" name="petName" required /></div><div className="field"><label htmlFor="petType">Pet type</label><select id="petType" name="petType" required><option>Cat</option><option>Dog</option><option>Bird</option><option>Rabbit</option><option>Other</option></select></div></div><div className="two-col"><div className="field"><label htmlFor="age">Age (optional)</label><input id="age" name="age" /></div><div className="field"><label htmlFor="preferredAt">Preferred date and time</label><input id="preferredAt" name="preferredAt" type="datetime-local" required /></div></div><div className="field"><label htmlFor="reason">Reason for visit</label><textarea id="reason" name="reason" required /></div><button className="primary-button" disabled={pending}>{pending ? 'Sending…' : 'Request appointment'}</button>{message && <p className="status-message" role="status">{message}</p>}</form>
+}

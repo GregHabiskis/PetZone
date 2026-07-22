@@ -1,0 +1,12 @@
+import Image from 'next/image'
+import Link from 'next/link'
+import { Activity, Microscope, ShieldPlus, Stethoscope } from 'lucide-react'
+import { AppointmentForm } from '@/components/appointment-form'
+import { getCurrentUser } from '@/lib/current-user'
+
+export const dynamic = 'force-dynamic'
+
+export default async function VetCarePage() {
+  const { user } = await getCurrentUser()
+  return <><section className="page-hero"><div className="shell"><p className="eyebrow">PET ZONE VET CARE CENTER</p><h1>Modern care, close to home.</h1><p>Preventive, diagnostic and treatment support for pets in Khulna.</p></div></section><section className="section shell"><div className="vet-feature"><div className="vet-image"><Image src="/media/vet-care-center.jpg" alt="Pet Zone Vet Care Center in Khulna" fill sizes="(max-width:767px) 100vw,50vw" /></div><div className="vet-copy"><Stethoscope/><h2>Advanced facilities, gentle care.</h2><p>Our care center is prepared for routine wellness, diagnostics, monitored procedures and recovery support.</p><ul><li>Digital imaging and laboratory diagnostics</li><li>Vaccination and parasite-prevention planning</li><li>Dental assessment and ultrasonic scaling</li><li>Minor surgery with monitored recovery</li><li>Nutrition, skin and coat consultations</li><li>Professional grooming and hygiene care</li></ul></div></div></section><section className="needs"><div className="shell"><div className="need-grid"><div className="form-card"><Activity/><h3>Diagnostics</h3><p>Evidence-led screening before treatment decisions.</p></div><div className="form-card"><ShieldPlus/><h3>Preventive care</h3><p>Vaccination, deworming and life-stage checkups.</p></div><div className="form-card"><Microscope/><h3>Laboratory support</h3><p>Modern testing with clear follow-up guidance.</p></div><div className="form-card"><Stethoscope/><h3>Consultation</h3><p>Friendly support for new or ongoing concerns.</p></div></div></div></section><section className="section shell narrow-form">{user ? <AppointmentForm /> : <div className="form-card"><p className="eyebrow">ACCOUNT REQUIRED</p><h2>Sign in before booking.</h2><p>Appointment requests are stored with your customer account so you can manage them securely.</p><div className="hero-actions"><Link className="primary-button" href="/account">Sign in</Link><Link className="secondary-button" href="/register">Create account</Link></div></div>}</section></>
+}
