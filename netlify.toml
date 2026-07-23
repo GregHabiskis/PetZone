@@ -1,0 +1,9 @@
+[build]
+  command = "pnpm build"
+  publish = ".next"
+
+[build.environment]
+  NODE_VERSION = "22"
+
+# OpenNext runtime handles SSR, API routes, ISR, and image optimization automatically.
+# No plugin pin needed — Netlify auto-updates the adapter on each build.
