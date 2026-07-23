@@ -5,11 +5,12 @@
 [build.environment]
   NODE_VERSION = "22"
 
-# Omit build artifacts from secrets scanning. Next.js bakes env vars into
-# generated sitemap/robots output, and the AWS SDK bundles region defaults —
-# neither is a real secret, but the scanner would otherwise block the build.
-# Source code is still fully scanned.
-  SECRETS_SCAN_OMIT_PATHS = ".netlify node_modules"
+# Omit public-config env vars from secret scanning. NEXT_PUBLIC_SITE_URL is a
+# public URL consumed by sitemap/robots, and SUPABASE_S3_REGION is a public
+# region string baked into the AWS SDK — neither is an actual credential.
+# Real secrets (DATABASE_URI, PAYLOAD_SECRET, access/secret keys) are still
+# fully scanned across all source code and build output.
+  SECRETS_SCAN_OMIT_KEYS = "NEXT_PUBLIC_SITE_URL,SUPABASE_S3_REGION"
 
 # OpenNext runtime handles SSR, API routes, ISR, and image optimization automatically.
 # No plugin pin needed — Netlify auto-updates the adapter on each build.
