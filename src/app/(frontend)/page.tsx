@@ -5,7 +5,7 @@ import { ProductCard } from '@/components/product-card'
 import { posts, products } from '@/lib/data'
 
 const pets = [
-  ['Cat', 'Food, litter & care'], ['Dog', 'Food, treats & walks'], ['Bird', 'Food, cages & health'], ['Fish', 'Food & water care'], ['Rabbit', 'Food, bedding & toys'], ['Small pets', 'Everyday essentials'],
+  ['Cat', 'Food, litter & care'], ['Dog', 'Food, treats & walks'], ['Bird', 'Food, cages & health'], ['Fish', 'Food & water care'], ['Rabbit', 'Food, bedding & toys'],
 ]
 const needs = ['Sensitive stomach', 'Skin & coat', 'Dental care', 'Flea & tick', 'Kitten & puppy', 'Weight management', 'Calming', 'Litter & cleanup']
 

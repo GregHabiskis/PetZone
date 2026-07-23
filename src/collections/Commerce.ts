@@ -16,6 +16,7 @@ export const Orders: CollectionConfig = {
   fields: [
     { name: 'orderNumber', type: 'text', unique: true, index: true, required: true },
     { name: 'customer', type: 'relationship', relationTo: 'customers', required: true, index: true },
+    { name: 'idempotencyKey', type: 'text', unique: true, index: true, admin: { readOnly: true, description: 'Client-generated key that makes checkout retries safe' } },
     {
       name: 'contact',
       type: 'group',
@@ -66,7 +67,7 @@ export const Orders: CollectionConfig = {
 
 export const Appointments: CollectionConfig = {
   slug: 'appointments',
-  admin: { useAsTitle: 'ownerName', defaultColumns: ['ownerName', 'petName', 'preferredAt', 'status'] },
+  admin: { useAsTitle: 'ownerName', defaultColumns: ['ownerName', 'petName', 'petType', 'status'] },
   access: { create: () => false, read: ownDocuments, update: staffOnly, delete: staffOnly },
   fields: [
     { name: 'customer', type: 'relationship', relationTo: 'customers', required: true, index: true },

@@ -57,14 +57,20 @@ export async function resolvePayloadCart(
   })
   const products = result.docs as unknown as PayloadCartProduct[]
   const byIdentifier = new Map<string, PayloadCartProduct>()
+  // A SKU that collides with another product's slug would silently swap the
+  // ordered product (and its price) — reject the identifier instead.
+  const ambiguous = new Set<string>()
   for (const product of products) {
-    byIdentifier.set(product.slug, product)
-    byIdentifier.set(product.sku, product)
+    for (const key of [product.slug, product.sku]) {
+      const existing = byIdentifier.get(key)
+      if (existing && existing.id !== product.id) ambiguous.add(key)
+      else byIdentifier.set(key, product)
+    }
   }
 
   return lines.map((line) => {
     const product = byIdentifier.get(line.productId)
-    if (!product || product.status !== 'active' || product.stock < line.quantity) {
+    if (!product || ambiguous.has(line.productId) || product.status !== 'active' || product.stock < line.quantity) {
       throw new Error(`Unavailable product: ${line.productId}`)
     }
     return {

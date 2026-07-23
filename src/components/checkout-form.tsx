@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useStore } from '@/components/store-provider'
 import { cartTotal, cartWeightGrams, formatBDT, shippingQuote, type PaymentMethod, type ShippingMethod } from '@/lib/commerce'
 import { calculateDiscountedTotals } from '@/lib/coupons'
@@ -21,6 +21,9 @@ export function CheckoutForm({ customer }: { customer: Customer }) {
   const [coupon, setCoupon] = useState<{ code: string; discount: number; cartSignature: string } | null>(null)
   const subtotal = cartTotal(cart)
   const cartSignature = cart.map(({ product, quantity }) => `${product.id}:${quantity}`).sort().join('|')
+  // One key per cart contents: retries of the same checkout are idempotent
+  // server-side, and a changed cart always gets a fresh key.
+  const idempotencyKey = useMemo(() => crypto.randomUUID(), [cartSignature])
   const appliedCoupon = coupon?.cartSignature === cartSignature ? coupon : null
   const weight = cartWeightGrams(cart)
   const shipping = shippingQuote(weight, shippingMethod)
@@ -62,7 +65,7 @@ export function CheckoutForm({ customer }: { customer: Customer }) {
         items: cart.map(({ product, quantity }) => ({ productId: product.slug, quantity })),
         contact: { firstName: form.get('firstName'), lastName: form.get('lastName'), phone: form.get('phone'), email: form.get('email'), streetAddress: form.get('streetAddress'), city: form.get('city'), postalCode: form.get('postalCode') },
         shippingMethod, paymentMethod, bkashNumber: form.get('bkashNumber'), bkashTransactionId: form.get('bkashTransactionId'),
-        termsAccepted: true, privacyAccepted: true, note: form.get('note'), couponCode: appliedCoupon?.code,
+        termsAccepted: true, privacyAccepted: true, note: form.get('note'), couponCode: appliedCoupon?.code, idempotencyKey,
       }),
     })
     const body = await response.json()

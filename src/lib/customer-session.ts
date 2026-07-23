@@ -39,6 +39,29 @@ export async function getCustomerFromHeaders(payload: Payload, headers: Headers)
   }
 }
 
+/**
+ * Revokes the server-side session behind the current customer cookie. Without
+ * this, "logout" only clears the browser cookie while the JWT stays valid
+ * until expiry (sessions are enabled by default in Payload v3).
+ */
+export async function revokeCustomerSession(payload: Payload, headers: Headers): Promise<void> {
+  const token = parseCookies(headers).get(CUSTOMER_SESSION_COOKIE)
+  if (!token) return
+  try {
+    const secretKey = new TextEncoder().encode(payload.secret)
+    const { payload: decoded } = await jwtVerify(token, secretKey)
+    if (decoded.collection !== 'customers' || !decoded.sid) return
+    const id = decoded.id
+    if (typeof id !== 'number' && typeof id !== 'string') return
+    const user = await payload.findByID({ collection: 'customers', id, depth: 0 })
+    const sessions = ((user as { sessions?: { id: string }[] }).sessions || [])
+      .filter((session) => session.id !== decoded.sid)
+    await payload.update({ collection: 'customers', id: user.id, data: { sessions }, overrideAccess: true })
+  } catch {
+    // Token already invalid or customer gone — the cookie is expired regardless.
+  }
+}
+
 export function buildCustomerSessionCookie(token: string, exp?: number): string {
   return generateCookie<false>({
     name: CUSTOMER_SESSION_COOKIE,

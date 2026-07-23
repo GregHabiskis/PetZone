@@ -28,7 +28,7 @@ export const Products: CollectionConfig = {
     { name: 'shortDescription', type: 'textarea', localized: true },
     { name: 'brand', type: 'relationship', relationTo: 'brands', required: true },
     { name: 'categories', type: 'relationship', relationTo: 'categories', hasMany: true },
-    { name: 'petTypes', type: 'select', hasMany: true, options: ['Cat', 'Dog', 'Bird', 'Rabbit', 'Fish', 'Reptile'] },
+    { name: 'petTypes', type: 'select', hasMany: true, options: ['Cat', 'Dog', 'Bird', 'Rabbit', 'Fish'] },
     { name: 'images', type: 'relationship', relationTo: 'media', hasMany: true, required: true },
     { name: 'price', type: 'number', min: 0, required: true },
     {

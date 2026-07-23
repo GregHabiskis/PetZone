@@ -13,7 +13,7 @@ describe('product CSV export', () => {
         sku: 'SKU-A', slug: 'first', status: 'active', name: { en: 'Food, "Best"', bn: 'সেরা খাবার' },
         description: { en: 'Line one\nLine two', bn: 'লাইন এক\nলাইন দুই' }, price: 10.5,
         compareAtPrice: 12, stock: 1, weightGrams: 100, brand: { id: 'brand-1' },
-        categories: [{ id: 'cat-1' }], petTypes: ['Cat', 'Small pets'], images: [{ id: 'media-1' }], variants: [],
+        categories: [{ id: 'cat-1' }], petTypes: ['Cat'], images: [{ id: 'media-1' }], variants: [],
         details: { ingredients: { en: 'Fish', bn: 'মাছ' }, prescriptionRequired: false },
         seo: { title: { en: 'Great', bn: 'দারুণ' }, canonical: '/first' },
       },

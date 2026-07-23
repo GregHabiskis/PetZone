@@ -10,7 +10,7 @@ import { CartDrawer } from './cart-drawer'
 import { ProductSearch } from './product-search'
 
 const nav = [
-  ['Offer Zone', '/offer-zone'], ['Cat', '/shop?pet=Cat'], ['Dog', '/shop?pet=Dog'], ['Bird', '/shop?pet=Bird'], ['Rabbit', '/shop?pet=Rabbit'], ['Small Pet Food', '/shop?pet=Small'], ['Shop By Brands', '/brands'], ['Vet Care Center', '/vet-care'], ['Blog', '/blog'],
+  ['Offer Zone', '/offer-zone'], ['Cat', '/shop?pet=Cat'], ['Dog', '/shop?pet=Dog'], ['Bird', '/shop?pet=Bird'], ['Rabbit', '/shop?pet=Rabbit'], ['Fish', '/shop?pet=Fish'], ['Shop By Brands', '/brands'], ['Vet Care Center', '/vet-care'], ['Blog', '/blog'],
 ]
 
 export function Header() {

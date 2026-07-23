@@ -83,7 +83,7 @@ export type ProductCSVRelations = {
 export type ProductCSVError = { row: number; sku?: string; field: string; message: string }
 export type ParsedProductCSVRow = { row: number; sku: string; data: ProductForCSV }
 
-const PET_TYPES = new Set(['Cat', 'Dog', 'Bird', 'Rabbit', 'Fish', 'Reptile'])
+const PET_TYPES = new Set(['Cat', 'Dog', 'Bird', 'Rabbit', 'Fish'])
 const STATUSES = new Set(['draft', 'active', 'archived'])
 const FORMULA = /^[\t\r\n ]*[=+\-@]/
 

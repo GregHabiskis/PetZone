@@ -10,8 +10,8 @@ vi.mock('next/link', () => ({ default: ({ href, children, ...props }: React.Anch
 
 import { Header } from './header'
 
-const labels = ['Offer Zone', 'Cat', 'Dog', 'Bird', 'Rabbit', 'Small Pet Food', 'Shop By Brands', 'Vet Care Center', 'Blog']
-const hrefs = ['/offer-zone', '/shop?pet=Cat', '/shop?pet=Dog', '/shop?pet=Bird', '/shop?pet=Rabbit', '/shop?pet=Small', '/brands', '/vet-care', '/blog']
+const labels = ['Offer Zone', 'Cat', 'Dog', 'Bird', 'Rabbit', 'Fish', 'Shop By Brands', 'Vet Care Center', 'Blog']
+const hrefs = ['/offer-zone', '/shop?pet=Cat', '/shop?pet=Dog', '/shop?pet=Bird', '/shop?pet=Rabbit', '/shop?pet=Fish', '/brands', '/vet-care', '/blog']
 
 describe('Header', () => {
   beforeEach(() => {

@@ -6,6 +6,7 @@ import * as migration_20260722_233000_add_reviews_locked_docs from './20260722_2
 import * as migration_20260723_111900_add_order_idempotency_and_review_uniqueness from './20260723_111900_add_order_idempotency_and_review_uniqueness';
 import * as migration_20260723_121200_remove_small_pets_pet_type from './20260723_121200_remove_small_pets_pet_type';
 import * as migration_20260723_160000_add_product_short_description from './20260723_160000_add_product_short_description';
+import * as migration_20260723_remove_reptile_pet_type from './20260723_remove_reptile_pet_type';
 
 export const migrations = [
   {
@@ -47,5 +48,10 @@ export const migrations = [
     up: migration_20260723_160000_add_product_short_description.up,
     down: migration_20260723_160000_add_product_short_description.down,
     name: '20260723_160000_add_product_short_description'
+  },
+  {
+    up: migration_20260723_remove_reptile_pet_type.up,
+    down: migration_20260723_remove_reptile_pet_type.down,
+    name: '20260723_remove_reptile_pet_type'
   },
 ];

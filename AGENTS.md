@@ -110,7 +110,7 @@ Migrations live under `src/migrations/` and are registered by `src/migrations/in
 6. Apply with `pnpm exec payload migrate`.
 7. Run `pnpm exec payload migrate:status` and Supabase security/performance advisors.
 
-The coupon/order-snapshot, required-product-SKU, move-customers-out-of-admin, and add-reviews-locked-docs migrations are applied to the current Supabase project. A former Payload `dev` schema-push record was reconciled before migration-driven mode was locked.
+The coupon/order-snapshot, required-product-SKU, move-customers-out-of-admin, add-reviews-locked-docs, and add-order-idempotency-and-review-uniqueness migrations are applied to the current Supabase project. A former Payload `dev` schema-push record was reconciled before migration-driven mode was locked. The `preferred_at` → `pet_weight` rename (applied out-of-band earlier) is reconciled idempotently inside the 20260723 migration.
 
 ## Product CSV architecture
 
@@ -152,6 +152,12 @@ Blank status defaults to `draft`. Unknown/ambiguous brand, category, or media re
 ## Authentication and forbidden flows
 
 - Two auth collections share one browser, so sessions are split by cookie: staff (`users`) use the Payload-managed `payload-token`; storefront customers (`customers`) use the dedicated `pz-customer-token` (7-day TTL) issued by `/api/store/login` and verified by `src/lib/customer-session.ts`. Payload hardcodes one cookie name for all auth collections — never point the storefront at `/api/customers/login`, or the two sessions will clobber each other again.
+- `/api/store/logout` also revokes the server-side session (`revokeCustomerSession` removes the `sid` from the customer doc). Clearing the cookie alone is not logout — the JWT would otherwise stay valid for its full TTL.
+- Never rely on Payload's default collection access (`Boolean(user)`): any authenticated user — including self-registered customers via the public `/api/customers/login` REST endpoint — passes it. Every collection must define explicit `access`. Public product reads are scoped to `status: active`; public Pages/Posts reads are scoped to `_status: published`; Media writes are staff-only with an image-only `mimeTypes` allowlist.
+- The `users.role` field is admin-granted only (`isAdminField`). Editors must never be able to change roles, including their own.
+- Mutating storefront routes share one CSRF posture: `isSameSiteRequest` from `src/lib/request-security.ts` (Origin host match, else `Sec-Fetch-Site`) plus `SameSite=Lax` cookies. Keep both.
+- Storefront route handlers cap JSON bodies via `readBoundedJson` (128 KiB default) and apply `src/lib/rate-limit.ts` buckets (in-memory; single-process deployment). Login: 10/5min/IP. Register: 5/h/IP. Orders: 30/h/user. Reviews: 30/h/user. Appointments: 10/h/user. Coupon validate: 60/5min/user. Account delete: 5/h/user. If the deployment ever scales beyond one Node process, replace the limiter with a shared store or edge rules.
+- Account deletion (`/api/store/account/delete`) requires the account password, then deletes reviews, appointments, orders, and the customer in ONE Payload transaction. No page-limited partial deletes.
 - Payload CSRF allowlists `serverURL` only by default. `localhost` and `127.0.0.1` are different hosts — browsing admin on one while `NEXT_PUBLIC_SITE_URL` is the other rejects cookie auth on PATCH/POST ("You are not allowed to perform this action"). `src/lib/site-origins.ts` pairs them; keep `csrf: siteOrigins(...)` in `payload.config.ts`.
 - All cookies are HTTP-only, `SameSite=Lax`, and secure in production.
 - Use `getCurrentUser()` for server-rendered storefront authentication, and `getCustomerFromHeaders()` in storefront route handlers. Never use `payload.auth()` for customer context: it returns the first matching strategy across all auth collections and can resolve a staff user instead of the customer.
@@ -166,13 +172,16 @@ Blank status defaults to `draft`. Unknown/ambiguous brand, category, or media re
 - Home-delivery shipping is calculated by total weight; local pickup is zero.
 - Coupon discount applies to eligible merchandise before shipping.
 - bKash fee is exactly `(discounted subtotal + shipping) × 1.85%`, rounded by the shared helper.
-- Order creation re-fetches and locks a coupon when a usage cap applies, revalidates usage in the same transaction, and stores `coupon`, `couponCode`, and `couponDiscount` snapshots.
+- Order creation runs inside `withAdvisoryLocks` (`pg_advisory_xact_lock`, sorted keys, `lock_timeout 10s`): per-product stock locks, the coupon lock (when a coupon is used), the idempotency-key lock, and the bKash-transaction lock. Inside one Payload transaction it: replays the idempotency key (returns the original order on retry), re-reads and decrements stock, rejects reused bKash transaction IDs, revalidates the coupon, and stores `coupon`, `couponCode`, and `couponDiscount` snapshots. Any failure rolls everything back — orders never decrement stock partially.
+- `orders.idempotencyKey` (unique, nullable) is client-generated per cart signature in `checkout-form.tsx`; bKash transaction IDs are single-use and enforced under the advisory lock.
+- Coupon usage counts exclude cancelled orders; usage-limit checks stay serialized by the coupon advisory lock.
 - Terms and privacy acceptance are required.
 - Cart recommendations exclude cart IDs and out-of-stock products, rank same pet/category before same brand, are deterministic, unique, and capped.
+- Product identifiers resolve by slug OR SKU; a SKU colliding with another product's slug makes the identifier ambiguous and the line is rejected (never silently swap products/prices).
 
 ## Cart and URL conventions
 
-- Cart data is persisted under `petzone-cart-v1`; validate persisted IDs against the current product source.
+- Cart data is persisted under `petzone-cart-v1`; the restore read must complete before any write (hydration-gated in `store-provider.tsx`), and persisted entries are shape-validated before rendering. Order-time IDs are revalidated server-side against the Payload catalog.
 - `addToCart` opens the global cart drawer for immediate feedback.
 - Drawer dismissal supports close button, backdrop, Escape, and focus restoration; keep its focus trap and reduced-motion behavior.
 - URL search parameters are the sole durable shop-filter state. Use `router.replace(..., { scroll: false })`, preserve unrelated parameters, and let refresh/back/forward reproduce the same results.
@@ -213,8 +222,34 @@ Names only; never commit or print values:
 - `SUPABASE_S3_SECRET_ACCESS_KEY`
 - `SUPABASE_S3_ENDPOINT`
 - `SUPABASE_S3_REGION`
+- `SEED_ADMIN_PASSWORD` (seed script only, never stored)
 - `SMOKE_BASE_URL` (verification override)
 - `SMOKE_TIMEOUT_MS` (verification override)
+
+## Deployment
+
+### Production — Hostinger (Docker/standalone)
+
+Set `output: 'standalone'` in `next.config.ts` — enabled by default (no `NETLIFY` env var).
+
+### Testing — Netlify
+
+`netlify.toml` in the repo root configures the build:
+- Build command: `pnpm build`
+- Publish directory: `.next`
+- Node version: 22
+
+**Config toggles in `next.config.ts`:**
+- When `NETLIFY=true`, `output` is `undefined` (Netlify's OpenNext adapter handles SSR).
+- Otherwise, `output` is `'standalone'` (Hostinger production).
+
+**Secrets scanning:**
+- `SECRETS_SCAN_OMIT_KEYS = "NEXT_PUBLIC_SITE_URL,SUPABASE_S3_REGION"` excludes two public-config keys from scanning. Real secrets (`DATABASE_URI`, `PAYLOAD_SECRET`, `SUPABASE_S3_ACCESS_KEY_ID`, `SUPABASE_S3_SECRET_ACCESS_KEY`) are scanned across all source and build output.
+
+**Environment variables in Netlify:**
+- No `.env*` files are tracked in git (`.gitignore` has `.env*` with zero exceptions).
+- Import all env vars manually in the Netlify dashboard before first deploy.
+- Trigger deploy: Netlify dashboard → Deploys → Trigger deploy.
 
 ## Current implementation status and deferred work
 
@@ -245,9 +280,9 @@ Configured in `src/payload.config.ts` with all rich-text features: bold, italic,
 - Product detail page renders the description in a dedicated `content-copy` section below the product hero, with English text followed by Bangla on a separate `<p lang="bn">` line.
 
 ### Reviews collection (`reviews`)
-- Slug: `reviews`. Fields: `customer` (required relationship to `customers`), `productSlug` (text, indexed), `rating` (number, 1–5), `comment` (textarea).
-- **Access**: create = authenticated customers only; read = public; update = own customer or staff; delete = staff only.
-- DB table: `reviews` with FK `customer_id → customers.id ON DELETE CASCADE`.
+- Slug: `reviews`. Fields: `customer` (required relationship to `customers`, update-locked), `productSlug` (text, indexed), `rating` (number, 1–5), `comment` (textarea).
+- **Access**: create = disabled (REST forging a review under another customer was possible); read = public; update = own customer or staff; delete = staff only. The only write path is `/api/store/reviews`, which pins `customer` to the session user server-side.
+- DB table: `reviews` with FK `customer_id → customers.id ON DELETE CASCADE` and a unique `(customer_id, product_slug)` index backstopping the one-review-per-customer rule against races.
 - **API routes**:
   - `GET /api/store/reviews?productSlug=xxx` — public, returns reviews with customer name, sorted newest-first.
   - `POST /api/store/reviews` — authenticated, one review per customer per product (409 on duplicate).
@@ -261,7 +296,7 @@ Configured in `src/payload.config.ts` with all rich-text features: bold, italic,
 - **Admin user**: `aversion-coke-punk@duck.com` — password reset via `scripts/seed-all.ts`; stored hash was corrupted.
 - **Posts**: 20 Bangla blog articles seeded from `src/lib/blog-data.ts` into the Payload `posts` collection.
 - **Pages**: 7 managed pages created (Homepage, About Us, Vet Care Center, Return & Refund Policy, Terms & Conditions, Privacy Policy, Offer Zone) with English + Bengali content in Lexical format.
-- Seed script: `scripts/seed-all.ts` — run with `pnpm dlx tsx --env-file=.env.local scripts/seed-all.ts`.
+- Seed script: `scripts/seed-all.ts` — run with `SEED_ADMIN_PASSWORD='…' pnpm dlx tsx --env-file=.env.local scripts/seed-all.ts`. The admin password is never stored in the repo.
 
 Still deployment-dependent or intentionally deferred:
 

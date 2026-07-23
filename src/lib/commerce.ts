@@ -70,7 +70,7 @@ export function normalizeCatalogFilters(
   const prices = products.map((product) => product.price)
   const priceFloor = prices.length ? Math.min(...prices) : 0
   const priceCeiling = prices.length ? Math.max(...prices) : 0
-  const allowedPets = new Set(['Cat', 'Dog', 'Bird', 'Rabbit', 'Fish', 'Reptile'])
+  const allowedPets = new Set(['Cat', 'Dog', 'Bird', 'Rabbit', 'Fish'])
   const parsePrice = (value: string | null | undefined, fallback: number) => {
     const parsed = Number(value)
     return value && Number.isFinite(parsed) ? Math.min(priceCeiling, Math.max(priceFloor, parsed)) : fallback

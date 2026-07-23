@@ -32,7 +32,7 @@ describe('commerce', () => {
 
   it('preserves linked brands and every supported pet type for zero-result states', () => {
     expect(normalizeCatalogFilters([product], { brand: 'Whiskas', pet: 'Fish' })).toMatchObject({ brand: 'Whiskas', pet: 'Fish' })
-    expect(normalizeCatalogFilters([product], { brand: 'Prama', pet: 'Small pets' })).toMatchObject({ brand: 'Prama', pet: 'Small pets' })
+    expect(normalizeCatalogFilters([product], { brand: 'Prama', pet: 'Fish' })).toMatchObject({ brand: 'Prama', pet: 'Fish' })
   })
 
   it('recommends in-stock products by category before brand without cart duplicates', () => {

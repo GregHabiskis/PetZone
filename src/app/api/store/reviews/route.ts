@@ -2,11 +2,13 @@ import config from '@payload-config'
 import { getPayload } from 'payload'
 import { z } from 'zod'
 import { getCustomerFromHeaders } from '@/lib/customer-session'
+import { checkRateLimit, rateLimitResponse } from '@/lib/rate-limit'
+import { isSameSiteRequest, readBoundedJson } from '@/lib/request-security'
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
   const productSlug = searchParams.get('productSlug')
-  if (!productSlug) return Response.json({ error: 'productSlug is required' }, { status: 400 })
+  if (!productSlug || productSlug.length > 160) return Response.json({ error: 'productSlug is required' }, { status: 400 })
 
   const payload = await getPayload({ config })
   const reviews = await payload.find({
@@ -30,17 +32,23 @@ export async function GET(request: Request) {
 }
 
 const createSchema = z.object({
-  productSlug: z.string().trim().min(1),
+  productSlug: z.string().trim().min(1).max(160),
   rating: z.number().int().min(1).max(5),
   comment: z.string().trim().min(1).max(2000),
 })
 
 export async function POST(request: Request) {
+  if (!isSameSiteRequest(request)) return Response.json({ error: 'Invalid request origin.' }, { status: 403 })
+
   const payload = await getPayload({ config })
   const user = await getCustomerFromHeaders(payload, request.headers)
   if (!user) return Response.json({ error: 'Sign in to leave a review.' }, { status: 401 })
 
-  const parsed = createSchema.safeParse(await request.json().catch(() => null))
+  // Review-spam guard: 30 submissions per hour per account.
+  const limit = checkRateLimit(`reviews:${user.id}`, 30, 60 * 60_000)
+  if (!limit.allowed) return rateLimitResponse(limit)
+
+  const parsed = createSchema.safeParse(await readBoundedJson(request))
   if (!parsed.success) return Response.json({ error: 'Invalid review data.' }, { status: 400 })
 
   const existing = await payload.find({
@@ -51,16 +59,27 @@ export async function POST(request: Request) {
   })
   if (existing.totalDocs > 0) return Response.json({ error: 'You have already reviewed this product.' }, { status: 409 })
 
-  const review = await payload.create({
-    collection: 'reviews',
-    data: {
-      customer: user.id,
-      productSlug: parsed.data.productSlug,
-      rating: parsed.data.rating,
-      comment: parsed.data.comment,
-    },
-    overrideAccess: true,
-  })
-
-  return Response.json({ ok: true, id: review.id }, { status: 201 })
+  try {
+    // customer is pinned to the session user server-side; the collection's REST
+    // create access is disabled so this route is the only write path.
+    const review = await payload.create({
+      collection: 'reviews',
+      data: {
+        customer: user.id,
+        productSlug: parsed.data.productSlug,
+        rating: parsed.data.rating,
+        comment: parsed.data.comment,
+      },
+      overrideAccess: true,
+    })
+    return Response.json({ ok: true, id: review.id }, { status: 201 })
+  } catch (error) {
+    // The unique (customer, productSlug) index backstops the check above
+    // against parallel submissions.
+    const message = error instanceof Error ? error.message.toLowerCase() : ''
+    if (message.includes('unique') || message.includes('duplicate')) {
+      return Response.json({ error: 'You have already reviewed this product.' }, { status: 409 })
+    }
+    return Response.json({ error: 'Failed to submit review.' }, { status: 500 })
+  }
 }

@@ -2,8 +2,9 @@ import type { Access, CollectionConfig, FieldAccess } from 'payload'
 
 export const isStaff = ({ req: { user } }: Parameters<Access>[0]): boolean =>
   Boolean(user?.collection === 'users' && ['admin', 'editor'].includes(String(user.role)))
-const isStaffField: FieldAccess = ({ req: { user } }) =>
-  Boolean(user?.collection === 'users' && ['admin', 'editor'].includes(String(user.role)))
+// Only admins may grant or change roles — editors must never self-promote.
+const isAdminField: FieldAccess = ({ req: { user } }) =>
+  Boolean(user?.collection === 'users' && user.role === 'admin')
 
 export const Users: CollectionConfig = {
   slug: 'users',
@@ -23,10 +24,10 @@ export const Users: CollectionConfig = {
     {
       name: 'role',
       type: 'select',
-      defaultValue: 'admin',
+      defaultValue: 'editor',
       options: ['admin', 'editor'],
       required: true,
-      access: { create: isStaffField, update: isStaffField },
+      access: { create: isAdminField, update: isAdminField },
     },
   ],
 }

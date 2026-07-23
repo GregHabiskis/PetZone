@@ -1,9 +1,15 @@
 import { getPayload } from 'payload'
 import config from '../src/payload.config'
 import { blogPosts } from '../src/lib/blog-data'
+import type { Page } from '../src/payload-types'
+
+type PageInput = Omit<Page, 'collection' | 'id' | 'createdAt' | 'deletedAt' | 'updatedAt'>
 
 const ADMIN_EMAIL = 'aversion-coke-punk@duck.com'
-const ADMIN_PASSWORD = 'bNgr^%xR#Re3S6wUh@Bc1^dux0NWGPsex9^0#k2gj6S5g*eNyUm&ZjhpaWycXffP'
+// Never hardcode credentials in this repo. Provide it at run time:
+//   SEED_ADMIN_PASSWORD='…' pnpm dlx tsx --env-file=.env.local scripts/seed-all.ts
+const ADMIN_PASSWORD = process.env.SEED_ADMIN_PASSWORD
+if (!ADMIN_PASSWORD) throw new Error('SEED_ADMIN_PASSWORD is required')
 
 const payload = await getPayload({ config })
 
@@ -51,8 +57,21 @@ function lexicalContent(text: string) {
       format: '',
       indent: 0,
       version: 1,
-      children: [{ type: 'paragraph', format: '', indent: 0, version: 1, textFormat: 0, textStyle: '', children: [{ text }] }],
-      direction: 'ltr',
+      direction: null,
+      children: [
+        {
+          type: 'paragraph',
+          format: '',
+          indent: 0,
+          version: 1,
+          direction: null,
+          textFormat: 0,
+          textStyle: '',
+          children: [
+            { type: 'text', format: 0, style: '', mode: 'normal', detail: 0, version: 1, text },
+          ],
+        },
+      ],
     },
   }
 }
@@ -106,17 +125,44 @@ for (const page of pages) {
     depth: 0,
     overrideAccess: true,
   })
-  const data = {
+  // Write each locale separately. Passing { en, bn } as a single content value
+  // stores a nested object Lexical cannot read (admin crashes on node.type).
+  const base = {
     title: page.title,
     slug: page.slug,
-    content: page.content,
     _status: 'published' as const,
   }
   if (existing.docs[0]) {
-    await payload.update({ collection: 'pages', id: existing.docs[0].id, data: data as any, overrideAccess: true })
+    const id = existing.docs[0].id
+    await payload.update({
+      collection: 'pages',
+      id,
+      locale: 'en',
+      data: { ...base, content: page.content.en } as unknown as PageInput,
+      overrideAccess: true,
+    })
+    await payload.update({
+      collection: 'pages',
+      id,
+      locale: 'bn',
+      data: { title: page.title, content: page.content.bn } as unknown as PageInput,
+      overrideAccess: true,
+    })
     pagesUpdated++
   } else {
-    await payload.create({ collection: 'pages', data: data as any, overrideAccess: true })
+    const created = await payload.create({
+      collection: 'pages',
+      locale: 'en',
+      data: { ...base, content: page.content.en } as unknown as PageInput,
+      overrideAccess: true,
+    })
+    await payload.update({
+      collection: 'pages',
+      id: created.id,
+      locale: 'bn',
+      data: { title: page.title, content: page.content.bn } as unknown as PageInput,
+      overrideAccess: true,
+    })
     pagesCreated++
   }
 }

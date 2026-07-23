@@ -2,6 +2,8 @@ import config from '@payload-config'
 import { getPayload } from 'payload'
 import { z } from 'zod'
 import { getCustomerFromHeaders } from '@/lib/customer-session'
+import { checkRateLimit, rateLimitResponse } from '@/lib/rate-limit'
+import { isSameSiteRequest, readBoundedJson } from '@/lib/request-security'
 
 const schema = z.object({
   ownerName: z.string().trim().min(2).max(160),
@@ -14,11 +16,17 @@ const schema = z.object({
 })
 
 export async function POST(request: Request) {
+  if (!isSameSiteRequest(request)) return Response.json({ error: 'Invalid request origin.' }, { status: 403 })
+
   const payload = await getPayload({ config })
   const user = await getCustomerFromHeaders(payload, request.headers)
   if (!user) return Response.json({ error: 'You must sign in before requesting an appointment.' }, { status: 401 })
 
-  const parsed = schema.safeParse(await request.json().catch(() => null))
+  // Appointment-spam guard: 10 requests per hour per account.
+  const limit = checkRateLimit(`appointments:${user.id}`, 10, 60 * 60_000)
+  if (!limit.allowed) return rateLimitResponse(limit)
+
+  const parsed = schema.safeParse(await readBoundedJson(request))
   if (!parsed.success) {
     const fieldErrors = parsed.error.flatten().fieldErrors as Record<string, string[] | undefined>
     const firstField = Object.keys(fieldErrors)[0]

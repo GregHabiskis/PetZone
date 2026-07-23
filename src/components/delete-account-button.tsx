@@ -10,16 +10,23 @@ export function DeleteAccountButton() {
   const inputRef = useRef<HTMLInputElement>(null)
 
   async function handleDelete() {
-    if (inputRef.current?.value !== 'DELETE') {
-      setError('Type DELETE to confirm.')
+    const password = inputRef.current?.value || ''
+    if (!password) {
+      setError('Enter your password to confirm.')
       return
     }
     setError('')
     setStep('pending')
-    const res = await fetch('/api/store/account/delete', { method: 'POST', credentials: 'include' })
+    const res = await fetch('/api/store/account/delete', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ password }),
+    })
     if (!res.ok) {
+      const data = await res.json().catch(() => ({}))
       setStep('confirm')
-      setError('Something went wrong. Please try again.')
+      setError(data.error || 'Something went wrong. Please try again.')
       return
     }
     setStep('done')
@@ -43,21 +50,21 @@ export function DeleteAccountButton() {
       </p>
       {step === 'confirm' && (
         <>
-          <p className="delete-instruction">Type <strong>DELETE</strong> to confirm.</p>
+          <p className="delete-instruction">Enter your account password to confirm.</p>
           <div className="field">
             <input
               ref={inputRef}
-              type="text"
-              autoComplete="off"
+              type="password"
+              autoComplete="current-password"
               onChange={() => {
                 if (error) setError('')
               }}
               onKeyDown={(e) => {
-                if (e.key === 'Enter' && inputRef.current?.value === 'DELETE') {
+                if (e.key === 'Enter') {
                   handleDelete()
                 }
               }}
-              placeholder="DELETE"
+              placeholder="Your password"
             />
           </div>
           {error && <p className="form-error" role="alert">{error}</p>}
@@ -65,7 +72,6 @@ export function DeleteAccountButton() {
             <button
               className="danger-button"
               onClick={handleDelete}
-              disabled={false}
             >
               Permanently delete
             </button>

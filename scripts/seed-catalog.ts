@@ -38,7 +38,7 @@ for (const product of products) {
     slug: product.slug,
     brand,
     categories: [category],
-    petTypes: [product.category] as Array<'Cat' | 'Dog' | 'Bird' | 'Rabbit' | 'Fish' | 'Small pets' | 'Reptile'>,
+    petTypes: [product.category] as Array<'Cat' | 'Dog' | 'Bird' | 'Rabbit' | 'Fish'>,
     images: [media],
     price: product.price,
     weightGrams: product.weightGrams,

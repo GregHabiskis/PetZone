@@ -347,9 +347,10 @@ export interface Product {
     };
     [k: string]: unknown;
   } | null;
+  shortDescription?: string | null;
   brand: number | Brand;
   categories?: (number | Category)[] | null;
-  petTypes?: ('Cat' | 'Dog' | 'Bird' | 'Rabbit' | 'Fish' | 'Small pets' | 'Reptile')[] | null;
+  petTypes?: ('Cat' | 'Dog' | 'Bird' | 'Rabbit' | 'Fish')[] | null;
   images: (number | Media)[];
   price: number;
   /**
@@ -419,9 +420,21 @@ export interface Product {
     prescriptionRequired?: boolean | null;
     safetyNote?: string | null;
   };
+  /**
+   * Optional overrides. Leave blank to use defaults from the product name, short description, and first image.
+   */
   seo?: {
+    /**
+     * Default when empty: [Product name] - Buy Online on Pet Zone
+     */
     title?: string | null;
+    /**
+     * Default when empty: [Short description] Shop now!
+     */
     description?: string | null;
+    /**
+     * Default when empty: first product image from the Images field.
+     */
     image?: (number | null) | Media;
     canonical?: string | null;
   };
@@ -488,7 +501,7 @@ export interface Post {
     [k: string]: unknown;
   } | null;
   /**
-   * Optional raw HTML — overrides the rich text content when filled.
+   * Optional raw HTML — overrides the rich text content when filled. Must be sanitized before any frontend rendering.
    */
   contentHtml?: string | null;
   featuredImage?: (number | null) | Media;
@@ -533,6 +546,10 @@ export interface Order {
   id: number;
   orderNumber: string;
   customer: number | Customer;
+  /**
+   * Client-generated key that makes checkout retries safe
+   */
+  idempotencyKey?: string | null;
   contact: {
     firstName: string;
     lastName: string;
@@ -880,6 +897,7 @@ export interface ProductsSelect<T extends boolean = true> {
   name?: T;
   slug?: T;
   description?: T;
+  shortDescription?: T;
   brand?: T;
   categories?: T;
   petTypes?: T;
@@ -994,6 +1012,7 @@ export interface CouponsSelect<T extends boolean = true> {
 export interface OrdersSelect<T extends boolean = true> {
   orderNumber?: T;
   customer?: T;
+  idempotencyKey?: T;
   contact?:
     | T
     | {

@@ -64,7 +64,7 @@ export function ProductReviews({ productSlug, isAuthenticated }: { productSlug: 
     await reloadReviews()
   }
 
-  const avgRating = total > 0 ? (reviews.reduce((s, r) => s + r.rating, 0) / total) : 0
+  const avgRating = reviews.length > 0 ? (reviews.reduce((s, r) => s + r.rating, 0) / reviews.length) : 0
 
   return (
     <div className="product-reviews">

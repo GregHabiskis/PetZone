@@ -2,6 +2,8 @@ import config from '@payload-config'
 import { getPayload } from 'payload'
 import { z } from 'zod'
 import { buildCustomerSessionCookie } from '@/lib/customer-session'
+import { checkRateLimit, rateLimitResponse } from '@/lib/rate-limit'
+import { getClientIp, isSameSiteRequest, readBoundedJson } from '@/lib/request-security'
 
 const schema = z.object({
   username: z.string().trim().min(1).max(160).optional(),
@@ -9,25 +11,14 @@ const schema = z.object({
   password: z.string().min(1).max(128),
 }).refine((data) => data.username || data.email, { message: 'Enter your phone number or email.' })
 
-// Mirrors Payload's own cookie CSRF rules: allow same-origin/same-site/direct
-// posts, reject cross-site posts and mismatched origins before any DB work.
-const isSameSiteRequest = (request: Request): boolean => {
-  const origin = request.headers.get('origin')
-  if (origin) {
-    try {
-      return new URL(origin).host === request.headers.get('host')
-    } catch {
-      return false
-    }
-  }
-  const secFetchSite = request.headers.get('sec-fetch-site')
-  return secFetchSite === null || ['same-origin', 'same-site', 'none'].includes(secFetchSite)
-}
-
 export async function POST(request: Request) {
   if (!isSameSiteRequest(request)) return Response.json({ error: 'Invalid request origin.' }, { status: 403 })
 
-  const parsed = schema.safeParse(await request.json().catch(() => null))
+  // Brute-force/credential-stuffing guard: 10 attempts per 5 minutes per IP.
+  const limit = checkRateLimit(`login:${getClientIp(request.headers)}`, 10, 5 * 60_000)
+  if (!limit.allowed) return rateLimitResponse(limit)
+
+  const parsed = schema.safeParse(await readBoundedJson(request))
   if (!parsed.success) return Response.json({ error: 'Enter your phone/email and password.' }, { status: 400 })
 
   const payload = await getPayload({ config })

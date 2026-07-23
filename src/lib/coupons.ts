@@ -109,7 +109,13 @@ export async function validateCouponWithPayload(
   })
   const document = result.docs[0] as unknown as CouponDocument | undefined
   if (!document) return calculateCoupon(undefined, { ...input, usageCount: 0 })
-  const usage = await payload.count({ collection: 'orders', where: { coupon: { equals: document.id } }, overrideAccess: true })
+  // Cancelled orders must not burn coupon usage — otherwise fake orders could
+  // exhaust a campaign's usage limit.
+  const usage = await payload.count({
+    collection: 'orders',
+    where: { and: [{ coupon: { equals: document.id } }, { status: { not_equals: 'cancelled' } }] },
+    overrideAccess: true,
+  })
   return calculateCoupon({
     ...document,
     eligibleProductIds: relationKeys(document.eligibleProducts),
@@ -119,15 +125,36 @@ export async function validateCouponWithPayload(
 
 type LockClient = { query: (query: string, values?: unknown[]) => Promise<unknown>; release: () => void }
 
-export async function withCouponLock<T>(payload: Payload, code: string, operation: () => Promise<T>): Promise<T> {
+/**
+ * Serializes critical commerce sections with Postgres advisory locks.
+ * - Keys are deduped and sorted so concurrent requesters lock in the same
+ *   order (no inter-request deadlocks).
+ * - pg_advisory_xact_lock auto-releases on commit/rollback, so a crashed
+ *   operation can never leak a lock back into the connection pool.
+ * - lock_timeout fails waiters fast instead of letting them pile up and
+ *   starve the pool.
+ */
+export async function withAdvisoryLocks<T>(payload: Payload, keys: string[], operation: () => Promise<T>): Promise<T> {
   const pool = (payload.db as unknown as { pool: { connect: () => Promise<LockClient> } }).pool
   const client = await pool.connect()
-  const lockKey = `petzone-coupon:${normalizeCouponCode(code)}`
-  await client.query('select pg_advisory_lock(hashtext($1))', [lockKey])
+  const sortedKeys = [...new Set(keys)].sort()
   try {
-    return await operation()
+    await client.query('begin')
+    await client.query(`set local lock_timeout = '10s'`)
+    for (const key of sortedKeys) {
+      await client.query('select pg_advisory_xact_lock(hashtext($1))', [`petzone:${key}`])
+    }
+    const result = await operation()
+    await client.query('commit')
+    return result
+  } catch (error) {
+    await client.query('rollback').catch(() => undefined)
+    throw error
   } finally {
-    await client.query('select pg_advisory_unlock(hashtext($1))', [lockKey])
     client.release()
   }
+}
+
+export function withCouponLock<T>(payload: Payload, code: string, operation: () => Promise<T>): Promise<T> {
+  return withAdvisoryLocks(payload, [`coupon:${normalizeCouponCode(code)}`], operation)
 }
