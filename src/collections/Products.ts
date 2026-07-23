@@ -69,7 +69,7 @@ export const Products: CollectionConfig = {
       type: 'group',
       admin: {
         description:
-          'Optional overrides. Leave blank to use defaults: “[Product name] - Buy Online on Pet Zone” and “[Product description] Shop now!”.',
+          'Optional overrides. Leave blank to use defaults from the product name, short description, and first image.',
       },
       fields: [
         {
@@ -88,7 +88,12 @@ export const Products: CollectionConfig = {
             description: 'Default when empty: [Short description] Shop now!',
           },
         },
-        { name: 'image', type: 'relationship', relationTo: 'media' },
+        {
+          name: 'image',
+          type: 'relationship',
+          relationTo: 'media',
+          admin: { description: 'Default when empty: first product image from the Images field.' },
+        },
         { name: 'canonical', type: 'text' },
       ],
     },
