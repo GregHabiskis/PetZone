@@ -6,7 +6,7 @@ Project URL: `https://sqwmabfgiofwtzbylmlg.supabase.co`
 ## What is already configured
 
 - Supabase MCP access is working; no additional MCP authorization is required.
-- The `payload-media` Storage bucket exists, is public for storefront delivery, allows image MIME types only, and limits files to 15 MB.
+- The Storage bucket exists, is public for storefront delivery, allows image MIME types only, and limits files to 15 MB.
 - `pg_trgm` and `unaccent` are enabled.
 - The initial Payload migration was generated at `src/migrations/20260721_180500.ts`.
 - An unsafe public execute permission on `public.rls_auto_enable()` was revoked.
@@ -15,7 +15,7 @@ Project URL: `https://sqwmabfgiofwtzbylmlg.supabase.co`
 
 The database Session Pooler URI and Supabase Storage S3 credentials are configured locally in `.env.local`. Keep this file private and never commit or share its values.
 
-Payload uses Supabase Storage's S3-compatible API; the `payload-media` endpoint, region, bucket, and access-key pair are configured.
+Payload uses Supabase Storage's S3-compatible API with endpoint, region, bucket, and access-key configured in env vars.
 
 ## Migration status
 

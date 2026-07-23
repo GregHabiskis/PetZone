@@ -10,7 +10,7 @@ const jakarta = Plus_Jakarta_Sans({ subsets: ['latin'], variable: '--font-ui' })
 const bengali = Noto_Sans_Bengali({ subsets: ['bengali'], variable: '--font-bn' })
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://petzone.com.bd'),
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL!),
   title: { default: 'Pet Zone — Pet Food, Accessories & Care in Bangladesh', template: '%s | Pet Zone' },
   description: 'Authentic pet food, medicine, accessories and trusted vet care across Bangladesh.',
   openGraph: { siteName: 'Pet Zone', type: 'website', locale: 'en_BD', alternateLocale: 'bn_BD' },

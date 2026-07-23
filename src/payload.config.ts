@@ -21,7 +21,7 @@ nextEnv.loadEnvConfig(process.cwd())
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
-const bucket = process.env.SUPABASE_STORAGE_BUCKET || 'payload-media'
+const bucket = process.env.SUPABASE_STORAGE_BUCKET ?? ''
 const s3AccessKey = process.env.SUPABASE_S3_ACCESS_KEY_ID
 const s3SecretKey = process.env.SUPABASE_S3_SECRET_ACCESS_KEY
 const siteURL = process.env.NEXT_PUBLIC_SITE_URL
@@ -78,7 +78,7 @@ export default buildConfig({
       collections: { media: { prefix: 'media' } },
       config: {
         endpoint: process.env.SUPABASE_S3_ENDPOINT,
-        region: process.env.SUPABASE_S3_REGION || 'ap-northeast-1',
+        region: process.env.SUPABASE_S3_REGION,
         forcePathStyle: true,
         credentials: s3AccessKey && s3SecretKey ? { accessKeyId: s3AccessKey, secretAccessKey: s3SecretKey } : undefined,
       },
