@@ -30,10 +30,8 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# env files (examples are safe to commit)
+# env files — all .env variants stay local only
 .env*
-!.env.example
-!.env.production.example
 
 # local Hermes workspace state
 .hermes/
