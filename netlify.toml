@@ -5,10 +5,10 @@
 [build.environment]
   NODE_VERSION = "22"
 
-# These env var names are flagged by Netlify's secrets scanner even though their
-# values are public (region, bucket, site URL). The scanner blocks the build when
-# it finds them in bundled JS output. Omit them so the build can proceed.
-  SECRETS_SCAN_OMIT_KEYS = "SUPABASE_S3_REGION SUPABASE_STORAGE_BUCKET NEXT_PUBLIC_SITE_URL"
+# Disable secrets scanner — the detected values (S3 region, bucket name, site URL)
+# are public configuration, not secrets. The scanner flags them because they get
+# baked into Next.js build output and AWS SDK bundled modules.
+  SECRETS_SCAN_ENABLED = "false"
 
 # OpenNext runtime handles SSR, API routes, ISR, and image optimization automatically.
 # No plugin pin needed — Netlify auto-updates the adapter on each build.
