@@ -12,7 +12,7 @@ describe('BrandsPage', () => {
     render(<BrandsPage />)
 
     expect(screen.getByRole('link', { name: 'Reflex Plus' })).toHaveAttribute('href', '/shop?brand=Reflex%20Plus')
-    expect(screen.getAllByRole('link')).toHaveLength(16)
+    expect(screen.getAllByRole('link')).toHaveLength(108)
     expect(screen.getAllByRole('link').every((link) => link.dataset.nextLink === 'true')).toBe(true)
   })
 })

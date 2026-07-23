@@ -2,6 +2,7 @@ import { parse } from 'csv-parse/sync'
 
 export const PRODUCT_CSV_HEADERS = [
   'sku', 'slug', 'status', 'name_en', 'name_bn', 'description_en', 'description_bn',
+  'short_description_en', 'short_description_bn',
   'price', 'compare_at_price', 'stock', 'weight_grams', 'brand', 'categories', 'pet_types',
   'image_ids', 'variants_json', 'ingredients_en', 'ingredients_bn', 'usage_en', 'usage_bn',
   'storage_en', 'storage_bn', 'safety_en', 'safety_bn', 'origin', 'prescription_required',
@@ -55,7 +56,7 @@ function rowFor(product: ProductForCSV): unknown[] {
   })) : []
   return [
     product.sku, product.slug, product.status, localized(product.name, 'en'), localized(product.name, 'bn'),
-    localized(product.description, 'en'), localized(product.description, 'bn'), product.price,
+    localized(product.description, 'en'), localized(product.description, 'bn'), localized(product.shortDescription, 'en'), localized(product.shortDescription, 'bn'), product.price,
     product.compareAtPrice, product.stock, product.weightGrams, relationID(product.brand),
     (product.categories || []).map(relationID).join(PRODUCT_CSV_RELATION_DELIMITER),
     (product.petTypes || []).join(PRODUCT_CSV_RELATION_DELIMITER),
@@ -82,7 +83,7 @@ export type ProductCSVRelations = {
 export type ProductCSVError = { row: number; sku?: string; field: string; message: string }
 export type ParsedProductCSVRow = { row: number; sku: string; data: ProductForCSV }
 
-const PET_TYPES = new Set(['Cat', 'Dog', 'Bird', 'Rabbit', 'Fish', 'Small pets', 'Reptile'])
+const PET_TYPES = new Set(['Cat', 'Dog', 'Bird', 'Rabbit', 'Fish', 'Reptile'])
 const STATUSES = new Set(['draft', 'active', 'archived'])
 const FORMULA = /^[\t\r\n ]*[=+\-@]/
 
@@ -200,6 +201,7 @@ export function parseProductCSV(input: string | Buffer, relations: ProductCSVRel
       const data: ProductForCSV = {
         sku, slug: record.slug.trim(), status, name: { en: record.name_en, bn: record.name_bn },
         description: { en: lexicalText(record.description_en), bn: lexicalText(record.description_bn) },
+        shortDescription: { en: record.short_description_en, bn: record.short_description_bn },
         price: numberValue(record.price, { required: true, min: 0 }, 'price'),
         compareAtPrice: numberValue(record.compare_at_price, { min: 0 }, 'compare_at_price'),
         stock: numberValue(record.stock, { required: true, integer: true, min: 0 }, 'stock'),

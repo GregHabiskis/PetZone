@@ -3,6 +3,9 @@ import * as migration_20260722_042651_add_coupons_and_order_snapshots from './20
 import * as migration_20260722_055932_required_product_sku from './20260722_055932_required_product_sku';
 import * as migration_20260722_081625_move_customers_out_of_admin from './20260722_081625_move_customers_out_of_admin';
 import * as migration_20260722_233000_add_reviews_locked_docs from './20260722_233000_add_reviews_locked_docs';
+import * as migration_20260723_111900_add_order_idempotency_and_review_uniqueness from './20260723_111900_add_order_idempotency_and_review_uniqueness';
+import * as migration_20260723_121200_remove_small_pets_pet_type from './20260723_121200_remove_small_pets_pet_type';
+import * as migration_20260723_160000_add_product_short_description from './20260723_160000_add_product_short_description';
 
 export const migrations = [
   {
@@ -29,5 +32,20 @@ export const migrations = [
     up: migration_20260722_233000_add_reviews_locked_docs.up,
     down: migration_20260722_233000_add_reviews_locked_docs.down,
     name: '20260722_233000_add_reviews_locked_docs'
+  },
+  {
+    up: migration_20260723_111900_add_order_idempotency_and_review_uniqueness.up,
+    down: migration_20260723_111900_add_order_idempotency_and_review_uniqueness.down,
+    name: '20260723_111900_add_order_idempotency_and_review_uniqueness'
+  },
+  {
+    up: migration_20260723_121200_remove_small_pets_pet_type.up,
+    down: migration_20260723_121200_remove_small_pets_pet_type.down,
+    name: '20260723_121200_remove_small_pets_pet_type'
+  },
+  {
+    up: migration_20260723_160000_add_product_short_description.up,
+    down: migration_20260723_160000_add_product_short_description.down,
+    name: '20260723_160000_add_product_short_description'
   },
 ];

@@ -1,10 +1,18 @@
 export type LocalizedText = { en: string; bn: string }
 
+export type ProductSeo = {
+  title?: LocalizedText
+  description?: LocalizedText
+  image?: string
+  canonical?: string
+}
+
 export type Product = {
   id: string
   slug: string
   name: LocalizedText
   description?: LocalizedText
+  shortDescription?: LocalizedText
   brand: string
   category: string
   price: number
@@ -13,6 +21,8 @@ export type Product = {
   image: string
   inStock: boolean
   badge?: string
+  /** Optional CMS overrides; blank fields use storefront defaults at render time. */
+  seo?: ProductSeo
 }
 
 export type CartItem = { product: Product; quantity: number }
@@ -60,7 +70,7 @@ export function normalizeCatalogFilters(
   const prices = products.map((product) => product.price)
   const priceFloor = prices.length ? Math.min(...prices) : 0
   const priceCeiling = prices.length ? Math.max(...prices) : 0
-  const allowedPets = new Set(['Cat', 'Dog', 'Bird', 'Rabbit', 'Fish', 'Small pets', 'Reptile'])
+  const allowedPets = new Set(['Cat', 'Dog', 'Bird', 'Rabbit', 'Fish', 'Reptile'])
   const parsePrice = (value: string | null | undefined, fallback: number) => {
     const parsed = Number(value)
     return value && Number.isFinite(parsed) ? Math.min(priceCeiling, Math.max(priceFloor, parsed)) : fallback
@@ -87,7 +97,7 @@ export function filterProducts(products: Product[], filters: ProductFilters): Pr
   return products.filter((product) => {
     const haystack = `${product.name.en} ${product.name.bn} ${product.brand} ${product.category}`.toLocaleLowerCase()
     const category = product.category.toLocaleLowerCase()
-    const petMatches = !pet || category === pet || (pet === 'small pets' && category.startsWith('small'))
+    const petMatches = !pet || category === pet
     return (!query || haystack.includes(query))
       && (filters.brand === 'All' || product.brand === filters.brand)
       && petMatches

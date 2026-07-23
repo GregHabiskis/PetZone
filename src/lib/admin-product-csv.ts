@@ -138,6 +138,7 @@ function productDataForLocale(data: Record<string, any>, locale: 'en' | 'bn', pe
     ...data,
     name: localized(data.name, locale),
     description: localized(data.description, locale),
+    shortDescription: localized(data.shortDescription, locale),
     variants: variants.map((variant: Record<string, any>) => ({
       ...variant,
       name: localized(variant.name, locale),
