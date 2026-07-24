@@ -52,7 +52,9 @@ export function DeleteAccountButton() {
         <>
           <p className="delete-instruction">Enter your account password to confirm.</p>
           <div className="field">
+            <label htmlFor="delete-password">Password</label>
             <input
+              id="delete-password"
               ref={inputRef}
               type="password"
               autoComplete="current-password"

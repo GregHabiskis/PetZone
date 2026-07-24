@@ -2,6 +2,7 @@
 
 import { Suspense } from 'react'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
+import { CustomSelect } from '@/components/custom-select'
 import { ProductCard } from '@/components/product-card'
 import { Pagination } from '@/components/pagination'
 import { brands } from '@/lib/brands'
@@ -76,23 +77,23 @@ function ShopCatalog() {
             <h3>Filter products</h3>
             <div className="field">
               <label htmlFor="brand-filter">Brand</label>
-              <select
+              <CustomSelect
                 id="brand-filter"
                 value={filters.brand}
-                onChange={(event) => updateFilter('brand', event.target.value, 'All')}
-              >
-                {filterBrands.map((item) => <option key={item}>{item}</option>)}
-              </select>
+                onChange={(value) => updateFilter('brand', value, 'All')}
+                options={filterBrands}
+                label="Brand"
+              />
             </div>
             <div className="field">
               <label htmlFor="pet-filter">Pet</label>
-              <select
+              <CustomSelect
                 id="pet-filter"
                 value={filters.pet}
-                onChange={(event) => updateFilter('pet', event.target.value, 'All')}
-              >
-                {pets.map((item) => <option key={item}>{item}</option>)}
-              </select>
+                onChange={(value) => updateFilter('pet', value, 'All')}
+                options={pets}
+                label="Pet"
+              />
             </div>
             <fieldset className="price-filter">
               <legend>Price Range</legend>
