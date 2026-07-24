@@ -21,7 +21,7 @@ export function Header() {
 
   useEffect(() => {
     const savedTheme = window.localStorage.getItem('petzone-theme')
-    const dark = savedTheme ? savedTheme === 'dark' : window.matchMedia('(prefers-color-scheme: dark)').matches
+    const dark = savedTheme === 'dark'
     document.documentElement.dataset.theme = dark ? 'dark' : 'light'
     const frame = window.requestAnimationFrame(() => setIsDark(dark))
     return () => window.cancelAnimationFrame(frame)
