@@ -1,6 +1,7 @@
 'use client'
 
 import { ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react'
+import { useEffect, useRef, useState } from 'react'
 
 function getPageNumbers(current: number, total: number): (number | 'ellipsis')[] {
   if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1)
@@ -13,6 +14,8 @@ function getPageNumbers(current: number, total: number): (number | 'ellipsis')[]
   pages.push(total)
   return pages
 }
+
+const PAGE_SIZES = [10, 20, 40, 60]
 
 export function Pagination({
   currentPage,
@@ -27,6 +30,19 @@ export function Pagination({
   onPageChange: (page: number) => void
   onPageSizeChange?: (size: number) => void
 }) {
+  const [sizeOpen, setSizeOpen] = useState(false)
+  const sizeRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (sizeRef.current && !sizeRef.current.contains(e.target as Node)) {
+        setSizeOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
+
   if (totalPages <= 1 && !onPageSizeChange) return null
 
   const pages = getPageNumbers(currentPage, totalPages)
@@ -80,19 +96,37 @@ export function Pagination({
       </div>
 
       {onPageSizeChange && (
-        <div className="pagination-size">
-          <select
-            value={pageSize}
-            onChange={(e) => onPageSizeChange(Number(e.target.value))}
+        <div className="pagination-size" ref={sizeRef}>
+          <button
+            type="button"
+            className="pagination-size-trigger"
+            onClick={() => setSizeOpen(!sizeOpen)}
+            aria-haspopup="listbox"
+            aria-expanded={sizeOpen}
             aria-label="Items per page"
           >
-            {[10, 20, 40, 60].map((size) => (
-              <option key={size} value={size}>
-                {size} Items
-              </option>
-            ))}
-          </select>
-          <ChevronDown size={16} className="pagination-size-chevron" aria-hidden="true" />
+            <span>{pageSize} Items</span>
+            <ChevronDown size={16} className={`pagination-size-chevron${sizeOpen ? ' open' : ''}`} />
+          </button>
+          {sizeOpen && (
+            <ul className="pagination-size-dropdown" role="listbox" aria-label="Items per page">
+              {PAGE_SIZES.map((size) => (
+                <li
+                  key={size}
+                  role="option"
+                  aria-selected={size === pageSize}
+                  className={`pagination-size-option${size === pageSize ? ' selected' : ''}`}
+                  onMouseDown={(e) => {
+                    e.preventDefault()
+                    onPageSizeChange(size)
+                    setSizeOpen(false)
+                  }}
+                >
+                  {size} Items
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
       )}
     </nav>
